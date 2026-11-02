@@ -57,7 +57,7 @@ Download the latest VSIX from [GitHub Releases](https://github.com/roee030/pair-
 Or install from the command line:
 
 ```powershell
-code --install-extension .\pair-flow-0.1.0.vsix
+code --install-extension .\pair-flow-0.2.0.vsix
 ```
 
 ## A good first prompt
@@ -79,7 +79,21 @@ npm run typecheck
 npm run package
 ```
 
-The packaged extension is written to `pair-flow-0.1.0.vsix`. Press `F5` in VS Code to run the extension in an Extension Development Host while developing.
+The packaged extension is written to `pair-flow-0.2.0.vsix`. Press `F5` in VS Code to run the extension in an Extension Development Host while developing.
+
+## AI providers
+
+Choose `pairFlow.provider` in VS Code Settings. Pair Flow supports each provider through its native API:
+
+| Provider | Authentication | Default endpoint |
+| --- | --- | --- |
+| OpenAI | API key | `api.openai.com/v1` |
+| Anthropic | API key | `api.anthropic.com/v1` |
+| Google Gemini | API key | `generativelanguage.googleapis.com/v1beta` |
+| OpenRouter | API key | `openrouter.ai/api/v1` |
+| Ollama | None | `localhost:11434` |
+
+Set `pairFlow.model` when you want a different model or when your Ollama installation does not contain the default local model. Use `pairFlow.baseUrl` for proxies, self-hosted gateways, or a remote Ollama instance.
 
 ## What is tested
 

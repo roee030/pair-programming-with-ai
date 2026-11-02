@@ -1,12 +1,12 @@
 import { initialState, transition } from '../session/sessionMachine';
-import type { OpenAICompatibleClient } from '../model/openAICompatibleClient';
+import type { ModelClient } from '../model/modelClient';
 import type { WorkspaceAdapter, PreparedEdit } from '../workspace/workspaceAdapter';
 import type { SessionState } from '../session/types';
 
 export class PairOrchestrator {
   private state: SessionState = initialState();
   private prepared: PreparedEdit[] = [];
-  constructor(private readonly model: OpenAICompatibleClient, private readonly workspace: WorkspaceAdapter, private readonly render: (state: SessionState) => void) { this.render(this.state); }
+  constructor(private readonly model: ModelClient, private readonly workspace: WorkspaceAdapter, private readonly render: (state: SessionState) => void) { this.render(this.state); }
   get current(): SessionState { return this.state; }
   private set(event: Parameters<typeof transition>[1]): void { this.state = transition(this.state, event); this.render(this.state); }
   private async safe(work: () => Promise<void>): Promise<void> { try { await work(); } catch (error) { this.set({ type: 'FAIL', message: error instanceof Error ? error.message : String(error) }); } }
