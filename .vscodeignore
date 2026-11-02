@@ -1,9 +1,11 @@
 .git/**
+.github/**
 .gitignore
 .smoke-extensions/**
 .superpowers/**
 src/**
 docs/**
+CHANGELOG.md
 node_modules/**
 *.test.*
 tsconfig.json
