@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { createHash } from 'node:crypto';
 import { validateEdits, type ValidatedEdit } from './editValidation';
 import type { ProposedEdit } from '../session/types';
+import { documentEnd } from './textRange';
 
 export type PreparedEdit = ValidatedEdit & { currentHash: string; currentContent: string };
 export class WorkspaceAdapter {
@@ -26,8 +27,13 @@ export class WorkspaceAdapter {
       const current = await this.read(edit.absolutePath);
       if (hash(current) !== edit.currentHash || (edit.originalHash && edit.originalHash !== hash(current))) throw new Error(`File changed since preview: ${edit.path}`);
       const uri = vscode.Uri.file(edit.absolutePath);
-      if (current === undefined) workspaceEdit.createFile(uri, { ignoreIfExists: false });
-      workspaceEdit.replace(uri, new vscode.Range(0, 0, Number.MAX_SAFE_INTEGER, 0), edit.content);
+      if (current === undefined) {
+        workspaceEdit.createFile(uri, { ignoreIfExists: false });
+        workspaceEdit.insert(uri, new vscode.Position(0, 0), edit.content);
+      } else {
+        const end = documentEnd(current);
+        workspaceEdit.replace(uri, new vscode.Range(0, 0, end.line, end.character), edit.content);
+      }
     }
     if (!await vscode.workspace.applyEdit(workspaceEdit)) throw new Error('VS Code could not apply the approved change');
   }

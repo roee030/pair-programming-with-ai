@@ -2,6 +2,23 @@
 
 All notable changes to Pair Flow are documented here.
 
+## 0.3.2 — 2026-11-02
+
+### Added
+
+- A visible Stop task control that aborts active provider requests and ignores late responses.
+
+### Fixed
+
+- Replaced invalid oversized edit ranges with each document's exact final position, preventing approved changes from appearing stuck.
+- Made the code-clock loader and its orbit share the same circular geometry.
+- Derived the story connector fill from actual chapter progress instead of a fixed halfway point.
+- Added breathing room between approval actions and removed unnecessary bottom padding outside approval screens.
+
+### Changed
+
+- Plan generation now asks for three to six concise story chapters instead of long implementation essays.
+
 ## 0.3.1 — 2026-11-02
 
 ### Fixed

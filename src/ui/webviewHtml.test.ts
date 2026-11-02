@@ -24,6 +24,7 @@ describe('webview', () => {
     expect(html).toContain('code-clock');
     expect(html).toContain('Preparing chapter 1');
     expect(html).toContain('data-elapsed');
+    expect(html).toContain('data-command="stop"');
   });
   it('renders selectable files and bounded navigation controls', () => {
     const html = renderBody({ phase: 'awaitingChunkApproval', currentStep: 0, plan: { summary: 'S', steps: ['A'] }, chunk: { stepIndex: 0, title: 'A', explanation: 'E', edits: [{ path: 'src/a.ts', content: 'one\ntwo' }, { path: 'src/b.css', content: 'x' }] } } as never, 1);
@@ -31,5 +32,9 @@ describe('webview', () => {
     expect(html).toContain('data-index="1"');
     expect(html).toContain('2 / 2');
     expect(html).toContain('Apply approved chunk');
+  });
+  it('colors story progress from the actual number of completed chapters', () => {
+    const html = renderBody({ phase: 'requestingChunk', goal: 'Build auth', currentStep: 1, plan: { summary: 'S', steps: ['A', 'B', 'C'] } } as never);
+    expect(html).toContain('--story-progress:50%');
   });
 });

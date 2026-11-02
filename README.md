@@ -57,7 +57,7 @@ Download the latest VSIX from [GitHub Releases](https://github.com/roee030/pair-
 Or install from the command line:
 
 ```powershell
-code --install-extension .\pair-flow-0.3.1.vsix
+code --install-extension .\pair-flow-0.3.2.vsix
 ```
 
 ## A good first prompt
@@ -79,7 +79,7 @@ npm run typecheck
 npm run package
 ```
 
-The packaged extension is written to `pair-flow-0.3.1.vsix`. Press `F5` in VS Code to run the extension in an Extension Development Host while developing.
+The packaged extension is written to `pair-flow-0.3.2.vsix`. Press `F5` in VS Code to run the extension in an Extension Development Host while developing.
 
 ## AI providers
 

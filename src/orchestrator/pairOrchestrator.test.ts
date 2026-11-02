@@ -46,4 +46,20 @@ describe('pair orchestrator', () => {
     await Promise.all([first, second]);
     expect(orchestrator.current.phase).toBe('awaitingChunkApproval');
   });
+
+  it('stops an in-flight task and ignores its late completion', async () => {
+    let finish!: (value: { summary: string; steps: string[] }) => void;
+    let cancelled = false;
+    const pending = new Promise<{ summary: string; steps: string[] }>(resolve => { finish = resolve; });
+    const model = { requestPlan: () => pending, requestChunk: async () => ({ stepIndex: 0, title: 'A', explanation: 'E', edits: [] }), cancel: () => { cancelled = true; } };
+    const workspace = { context: async () => '', prepare: async () => [], apply: async () => {} };
+    const orchestrator = new PairOrchestrator(model as never, workspace as never, () => {});
+    const running = orchestrator.submitGoal('goal');
+    await Promise.resolve();
+    orchestrator.stop();
+    finish({ summary: 'Late', steps: ['Too late'] });
+    await running;
+    expect(cancelled).toBe(true);
+    expect(orchestrator.current.phase).toBe('idle');
+  });
 });

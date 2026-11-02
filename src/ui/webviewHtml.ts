@@ -23,7 +23,7 @@ export function renderBody(state: SessionState, selectedFile = 0): string {
       : state.phase === 'applying'
         ? ['Applying your approved chunk', 'Checking file freshness before writing']
         : [`Preparing chapter ${state.currentStep + 1}`, 'Connecting it to the code story'];
-    return `${shellStart}${story}<section class="busy-card" aria-live="polite"><div class="code-clock"><span>&lt;/&gt;</span><i></i></div><p class="kicker ai">AI is working</p><h2>${escape(details[0])}</h2><p>${escape(details[1])}</p><div class="busy-meta"><span class="spinner"></span><code data-elapsed>0s elapsed</code></div><p class="slow-hint">Complex projects can take a little longer. The request will time out safely instead of hanging forever.</p></section>${shellEnd}`;
+    return `${shellStart}${story}<section class="busy-card" aria-live="polite"><div class="code-clock"><span>&lt;/&gt;</span><i></i></div><p class="kicker ai">AI is working</p><h2>${escape(details[0])}</h2><p>${escape(details[1])}</p><div class="busy-meta"><span class="spinner"></span><code data-elapsed>0s elapsed</code></div><button class="stop-task" data-command="stop">Stop task</button><p class="slow-hint">Complex projects can take a little longer. The request will time out safely instead of hanging forever.</p></section>${shellEnd}`;
   }
 
   if (state.phase === 'awaitingPlanApproval' && state.plan) return `${shellStart}${story}<section class="decision-card"><div class="status-line"><span class="status-dot amber"></span><span>Your decision</span></div><h2>Does this route tell the right story?</h2><p>${escape(state.plan.summary)}</p></section><footer class="action-dock"><button class="primary wide" data-command="approvePlan">${icon('check')}<span>Approve route</span></button><button class="secondary wide" data-command="reset">Start over</button></footer>${shellEnd}`;
@@ -48,7 +48,8 @@ function renderStory(state: SessionState): string {
     const marker = status === 'done' ? icon('check') : `<span>${index + 1}</span>`;
     return `<li class="story-step ${status}"><div class="story-node">${marker}</div><div><small>${status === 'done' ? 'Approved' : status === 'active' ? 'Current chapter' : 'Upcoming'}</small><strong>${escape(step)}</strong></div></li>`;
   }).join('');
-  return `${goal}<section class="story-map"><div class="map-title"><span>Code story</span><code>${Math.min(state.currentStep + 1, state.plan.steps.length)}/${state.plan.steps.length}</code></div><ol class="story-spine">${steps}</ol></section>`;
+  const progress = state.plan.steps.length <= 1 ? 0 : Math.round((Math.min(state.currentStep, state.plan.steps.length - 1) / (state.plan.steps.length - 1)) * 100);
+  return `${goal}<section class="story-map"><div class="map-title"><span>Code story</span><code>${Math.min(state.currentStep + 1, state.plan.steps.length)}/${state.plan.steps.length}</code></div><ol class="story-spine" style="--story-progress:${progress}%">${steps}</ol></section>`;
 }
 
 function fileName(path: string): string { return path.split(/[\\/]/).pop() ?? path; }

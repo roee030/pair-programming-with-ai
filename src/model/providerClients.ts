@@ -20,6 +20,7 @@ class ProviderClient implements ModelClient {
   private readonly baseUrl: string;
   private readonly model: string;
   private readonly request: typeof fetch;
+  private readonly activeRequests = new Set<AbortController>();
   constructor(private readonly options: ProviderOptions) {
     const fallback = providerDefaults(options.provider);
     this.baseUrl = (options.baseUrl?.trim() || fallback.baseUrl).replace(/\/$/, '');
@@ -32,6 +33,7 @@ class ProviderClient implements ModelClient {
   async requestChunk(goal: string, plan: Plan, stepIndex: number, context: string, feedback?: string): Promise<Chunk> {
     return parseChunkResponse(await this.complete(CHUNK_PROMPT, JSON.stringify({ goal, plan, stepIndex, context, feedback })));
   }
+  cancel(): void { for (const controller of this.activeRequests) controller.abort(); this.activeRequests.clear(); }
   private async complete(system: string, user: string): Promise<string> {
     if (this.options.provider !== 'ollama' && !this.options.apiKey) throw new Error(`Set your ${this.options.provider} API key first`);
     switch (this.options.provider) {
@@ -61,18 +63,20 @@ class ProviderClient implements ModelClient {
   }
   private async post(url: string, headers: Record<string, string>, body: unknown): Promise<unknown> {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.options.timeoutMs ?? 120_000);
+    let timedOut = false;
+    this.activeRequests.add(controller);
+    const timer = setTimeout(() => { timedOut = true; controller.abort(); }, this.options.timeoutMs ?? 120_000);
     try {
       const response = await this.request(url, { method: 'POST', headers, body: JSON.stringify(body), signal: controller.signal });
       if (!response.ok) { const detail = await response.text(); throw new Error(`${this.options.provider} request failed (${response.status})${detail ? `: ${detail.slice(0, 240)}` : ''}`); }
       return response.json();
     } catch (error) {
-      if (controller.signal.aborted) throw new Error(`${this.options.provider} request timed out`);
+      if (controller.signal.aborted) throw new Error(timedOut ? `${this.options.provider} request timed out` : 'Task stopped');
       throw error;
-    } finally { clearTimeout(timer); }
+    } finally { clearTimeout(timer); this.activeRequests.delete(controller); }
   }
 }
 
 function required(value: string | undefined): string { if (!value) throw new Error('Model returned an empty response'); return value; }
-const PLAN_PROMPT = `You are a careful pair programmer. Return JSON only: {"summary":"what we will do","steps":["small step"]}. Each step must be independently understandable and reviewable. Do not write code.`;
+const PLAN_PROMPT = `You are a careful pair programmer. Return JSON only: {"summary":"what we will do","steps":["small step"]}. Return 3-6 concise chapters. Each chapter is a short action title under 12 words, independently understandable and reviewable. Do not include alternate branches, conditional advice, implementation detail, or code.`;
 const CHUNK_PROMPT = `Return JSON only: {"stepIndex":0,"title":"","explanation":"","edits":[{"path":"relative/path","content":"complete new file content"}],"verification":"optional safe command"}. One coherent change, at most 3 text files. Never use absolute paths.`;

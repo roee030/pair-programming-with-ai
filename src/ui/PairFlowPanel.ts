@@ -61,7 +61,8 @@ export class PairFlowPanel implements vscode.WebviewViewProvider {
     }
     if (message.type === 'submitGoal' && !flow) flow = await this.ensureSession();
     if (!flow) return;
-    if (message.type === 'submitGoal') await flow.submitGoal(message.goal);
+    if (message.type === 'stop') flow.stop();
+    else if (message.type === 'submitGoal') await flow.submitGoal(message.goal);
     else if (message.type === 'approvePlan') await flow.approvePlan();
     else if (message.type === 'approveChunk') await flow.approveChunk();
     else if (message.type === 'rejectChunk') await flow.rejectChunk();
