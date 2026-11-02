@@ -1,0 +1,8 @@
+node_modules/
+node_modules.incomplete/
+package-lock.incomplete.json
+dist/
+*.vsix
+.superpowers/
+.pairflow-preview/
+.smoke-extensions/

@@ -1,0 +1,41 @@
+{
+  "name": "pair-flow",
+  "displayName": "Pair Flow",
+  "description": "Build with AI one reviewed code chunk at a time.",
+  "version": "0.1.0",
+  "license": "MIT",
+  "publisher": "pair-flow",
+  "engines": { "vscode": "^1.95.0" },
+  "categories": ["Other", "Machine Learning"],
+  "activationEvents": ["onCommand:pairFlow.start", "onCommand:pairFlow.setApiKey"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "pairFlow.start", "title": "Pair Flow: Start Session" },
+      { "command": "pairFlow.setApiKey", "title": "Pair Flow: Set API Key" }
+    ],
+    "configuration": {
+      "title": "Pair Flow",
+      "properties": {
+        "pairFlow.baseUrl": { "type": "string", "default": "https://api.openai.com/v1", "description": "OpenAI-compatible API base URL." },
+        "pairFlow.model": { "type": "string", "default": "gpt-5-mini", "description": "Model used for plans and code chunks." },
+        "pairFlow.maxContextFiles": { "type": "number", "default": 12, "minimum": 1, "maximum": 30 }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "package": "npm run test && npm run typecheck && npm run build && vsce package --no-dependencies"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/vscode": "^1.95.0",
+    "@vscode/vsce": "^3.2.1",
+    "esbuild": "^0.24.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

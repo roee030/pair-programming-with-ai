@@ -1,0 +1,11 @@
+.git/**
+.gitignore
+.superpowers/**
+src/**
+docs/**
+node_modules/**
+*.test.*
+tsconfig.json
+esbuild.mjs
+package-lock.incomplete.json
+node_modules.incomplete/**
