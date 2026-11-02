@@ -2,7 +2,7 @@
   "name": "pair-flow",
   "displayName": "Pair Flow",
   "description": "Build with AI one reviewed code chunk at a time.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "license": "MIT",
   "publisher": "pair-flow",
   "repository": {
@@ -15,9 +15,19 @@
   "galleryBanner": { "color": "#1f2933", "theme": "dark" },
   "engines": { "vscode": "^1.95.0" },
   "categories": ["Other", "Machine Learning"],
-  "activationEvents": ["onCommand:pairFlow.start", "onCommand:pairFlow.setApiKey"],
+  "activationEvents": ["onCommand:pairFlow.start", "onCommand:pairFlow.setApiKey", "onView:pairFlow.view"],
   "main": "./dist/extension.js",
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        { "id": "pairFlow", "title": "Pair Flow", "icon": "media/pair-flow.svg" }
+      ]
+    },
+    "views": {
+      "pairFlow": [
+        { "type": "webview", "id": "pairFlow.view", "name": "Pair Flow" }
+      ]
+    },
     "commands": [
       { "command": "pairFlow.start", "title": "Pair Flow: Start Session" },
       { "command": "pairFlow.setApiKey", "title": "Pair Flow: Set API Key" }

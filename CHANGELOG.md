@@ -2,6 +2,22 @@
 
 All notable changes to Pair Flow are documented here.
 
+## 0.3.0 — 2026-11-02
+
+### Added
+
+- Persistent Pair Flow Activity Bar side panel.
+- Goal-to-chapter code story with connected progress states.
+- Automatic native diff opening and multi-file previous/next navigation.
+- File-type icons, richer typography, color-coded states, and a fixed approval dock.
+- Code-clock loader with live elapsed time and reduced-motion support.
+- Provider request timeout and duplicate-action protection.
+
+### Fixed
+
+- Approving a plan no longer appears to silently remove the button while work happens.
+- New proposed files can be reviewed through virtual diff documents.
+
 ## 0.2.0 — 2026-11-02
 
 ### Added

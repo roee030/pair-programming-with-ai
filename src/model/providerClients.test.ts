@@ -43,4 +43,12 @@ describe('provider clients', () => {
       expect(providerDefaults(provider).baseUrl).toMatch(/^https?:\/\//);
     }
   });
+
+  it('aborts a provider request after the configured timeout', async () => {
+    const fetch = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>((_input, init) => new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+    }));
+    const client = createProviderClient({ provider: 'openai', apiKey: 'key', model: 'test', baseUrl: '', fetch, timeoutMs: 10 });
+    await expect(client.requestPlan('goal', 'context')).rejects.toThrow(/timed out/i);
+  });
 });

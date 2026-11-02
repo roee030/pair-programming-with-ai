@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { validateEdits, type ValidatedEdit } from './editValidation';
 import type { ProposedEdit } from '../session/types';
 
-export type PreparedEdit = ValidatedEdit & { currentHash: string };
+export type PreparedEdit = ValidatedEdit & { currentHash: string; currentContent: string };
 export class WorkspaceAdapter {
   constructor(private readonly root: vscode.Uri) {}
   async context(maxFiles = 12): Promise<string> {
@@ -18,7 +18,7 @@ export class WorkspaceAdapter {
   }
   async prepare(edits: ProposedEdit[]): Promise<PreparedEdit[]> {
     const validated = validateEdits(this.root.fsPath, edits);
-    return Promise.all(validated.map(async edit => ({ ...edit, currentHash: hash(await this.read(edit.absolutePath)) })));
+    return Promise.all(validated.map(async edit => { const current = await this.read(edit.absolutePath); return { ...edit, currentHash: hash(current), currentContent: current ?? '' }; }));
   }
   async apply(prepared: PreparedEdit[]): Promise<void> {
     const workspaceEdit = new vscode.WorkspaceEdit();

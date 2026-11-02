@@ -3,7 +3,7 @@ import type { ModelClient } from './modelClient';
 import { parseChunkResponse, parsePlanResponse } from './protocol';
 
 export type Provider = 'openai' | 'anthropic' | 'gemini' | 'openrouter' | 'ollama';
-export type ProviderOptions = { provider: Provider; apiKey: string; model?: string; baseUrl?: string; fetch?: typeof fetch };
+export type ProviderOptions = { provider: Provider; apiKey: string; model?: string; baseUrl?: string; fetch?: typeof fetch; timeoutMs?: number };
 
 const defaults: Record<Provider, { baseUrl: string; model: string }> = {
   openai: { baseUrl: 'https://api.openai.com/v1', model: 'gpt-5-mini' },
@@ -60,9 +60,16 @@ class ProviderClient implements ModelClient {
     return required(data.message?.content);
   }
   private async post(url: string, headers: Record<string, string>, body: unknown): Promise<unknown> {
-    const response = await this.request(url, { method: 'POST', headers, body: JSON.stringify(body) });
-    if (!response.ok) { const detail = await response.text(); throw new Error(`${this.options.provider} request failed (${response.status})${detail ? `: ${detail.slice(0, 240)}` : ''}`); }
-    return response.json();
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.options.timeoutMs ?? 120_000);
+    try {
+      const response = await this.request(url, { method: 'POST', headers, body: JSON.stringify(body), signal: controller.signal });
+      if (!response.ok) { const detail = await response.text(); throw new Error(`${this.options.provider} request failed (${response.status})${detail ? `: ${detail.slice(0, 240)}` : ''}`); }
+      return response.json();
+    } catch (error) {
+      if (controller.signal.aborted) throw new Error(`${this.options.provider} request timed out`);
+      throw error;
+    } finally { clearTimeout(timer); }
   }
 }
 
