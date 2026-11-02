@@ -2,6 +2,19 @@
 
 All notable changes to Pair Flow are documented here.
 
+## 0.3.1 — 2026-11-02
+
+### Fixed
+
+- Corrected the webview Content Security Policy so the complete stylesheet loads in VS Code.
+- Prevented inline SVG icons from falling back to enormous browser-default dimensions.
+
+### Changed
+
+- Reworked the empty state around a restrained editor-style canvas and bottom prompt composer.
+- Replaced the Activity Bar icon with a clean connected-flow mark.
+- Removed duplicated branding and oversized decorative elements from the side panel.
+
 ## 0.3.0 — 2026-11-02
 
 ### Added

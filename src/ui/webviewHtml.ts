@@ -12,9 +12,9 @@ const icon = (name: 'spark' | 'goal' | 'check' | 'file' | 'arrow' | 'warning') =
 };
 
 export function renderBody(state: SessionState, selectedFile = 0): string {
-  const shellStart = `<main><div class="brand"><span class="brand-mark">&lt;/&gt;</span><div><strong>Pair Flow</strong><span>Code story</span></div><button class="icon-button" data-command="reset" title="New story">＋</button></div>`;
+  const shellStart = `<main><div class="toolbar"><span class="mode-pill"><i></i>Approval mode</span><button class="icon-button" data-command="reset" title="New code story">＋</button></div>`;
   const shellEnd = `</main>`;
-  if (state.phase === 'idle') return `${shellStart}<section class="welcome"><div class="orb">${icon('spark')}</div><p class="kicker">Your code, your decisions</p><h1>What should we build together?</h1><p class="lead">I’ll map the route, then stop at every small change for your review.</p><form data-action="goal"><textarea name="goal" rows="7" autofocus placeholder="Describe the outcome, bug, or feature…"></textarea><button class="primary wide"><span>Build the story</span>${icon('arrow')}</button></form><div class="promise"><span class="shield">◆</span><p><strong>Approval locked</strong><br>Nothing reaches your files until you approve the chunk.</p></div></section>${shellEnd}`;
+  if (state.phase === 'idle') return `<main class="idle-shell"><div class="toolbar"><span class="mode-pill"><i></i>Approval mode</span><button class="icon-button" data-command="reset" title="New code story">＋</button></div><section class="empty-stage"><div class="empty-logo"><span></span><span></span><span></span></div><h1>Start a code story</h1><p>Describe the outcome. Pair Flow will find the entry point, map the connected steps, and pause at every chunk.</p></section><section class="composer-wrap"><form class="composer" data-action="goal"><textarea name="goal" rows="3" autofocus placeholder="Ask Pair Flow to build or change something…"></textarea><div class="composer-bar"><div class="composer-hints"><span>⌁ Plan first</span><span>◇ Review each chunk</span></div><button class="send" aria-label="Build the story" title="Build the story">${icon('arrow')}</button></div></form><p class="privacy-line"><span>◆</span> No file changes without approval</p></section></main>`;
 
   const story = renderStory(state);
   if (state.phase === 'planning' || state.phase === 'requestingChunk' || state.phase === 'applying') {
@@ -56,6 +56,6 @@ function extension(path: string): string { return fileName(path).split('.').pop(
 function fileGlyph(path: string): string { return ({ ts: 'TS', tsx: 'TS', js: 'JS', jsx: 'JS', css: '#', json: '{}', md: 'M↓', py: 'PY', cs: 'C#', go: 'GO', rs: 'RS' } as Record<string, string>)[extension(path)] ?? '·/'; }
 function fileColor(path: string): string { return `kind-${({ ts: 'blue', tsx: 'blue', js: 'yellow', jsx: 'yellow', css: 'violet', json: 'amber', md: 'cyan', py: 'green', cs: 'violet', go: 'cyan', rs: 'orange' } as Record<string, string>)[extension(path)] ?? 'neutral'}`; }
 
-export function renderWebviewHtml(nonce: string, styleUri: string, scriptUri: string, body: string): string {
-  return `<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${styleUri}; script-src 'nonce-${nonce}'"><link rel="stylesheet" href="${styleUri}"></head><body>${body}<script nonce="${nonce}" src="${scriptUri}"></script></body></html>`;
+export function renderWebviewHtml(nonce: string, cspSource: string, styleUri: string, scriptUri: string, body: string): string {
+  return `<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource}; script-src 'nonce-${nonce}'"><link rel="stylesheet" href="${styleUri}"></head><body>${body}<script nonce="${nonce}" src="${scriptUri}"></script></body></html>`;
 }

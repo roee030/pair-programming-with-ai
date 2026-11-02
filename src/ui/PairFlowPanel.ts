@@ -45,7 +45,7 @@ export class PairFlowPanel implements vscode.WebviewViewProvider {
     if (!this.view) return;
     const webview = this.view.webview;
     const nonce = randomBytes(16).toString('base64');
-    webview.html = renderWebviewHtml(nonce, webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'main.css')).toString(), webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'main.js')).toString(), renderBody(this.state, this.selectedFile));
+    webview.html = renderWebviewHtml(nonce, webview.cspSource, webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'main.css')).toString(), webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'main.js')).toString(), renderBody(this.state, this.selectedFile));
   }
   private async handle(value: unknown): Promise<void> {
     const message = parsePanelMessage(value);
