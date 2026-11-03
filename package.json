@@ -2,7 +2,7 @@
   "name": "pair-flow",
   "displayName": "Pair Flow",
   "description": "Build with AI one reviewed code chunk at a time.",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "license": "MIT",
   "publisher": "pair-flow",
   "repository": {
@@ -38,6 +38,7 @@
         "pairFlow.provider": { "type": "string", "enum": ["openai", "anthropic", "gemini", "openrouter", "ollama"], "enumDescriptions": ["OpenAI API", "Anthropic Messages API", "Google Gemini API", "OpenRouter", "Local Ollama server"], "default": "openai", "description": "AI provider used for plans and code chunks." },
         "pairFlow.baseUrl": { "type": "string", "default": "", "description": "Optional custom provider base URL. Leave empty to use the provider default." },
         "pairFlow.model": { "type": "string", "default": "", "description": "Optional model identifier. Leave empty to use the provider default." },
+        "pairFlow.requestTimeoutSeconds": { "type": "number", "default": 120, "minimum": 30, "maximum": 600, "description": "Seconds before an active provider request is paused automatically." },
         "pairFlow.maxContextFiles": { "type": "number", "default": 12, "minimum": 1, "maximum": 30 }
       }
     }

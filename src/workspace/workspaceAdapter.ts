@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { createHash } from 'node:crypto';
-import { validateEdits, type ValidatedEdit } from './editValidation';
+import { decidePreparedApply, validateEdits, type ValidatedEdit } from './editValidation';
 import type { ProposedEdit } from '../session/types';
 import { documentEnd } from './textRange';
 
@@ -23,10 +23,12 @@ export class WorkspaceAdapter {
   }
   async apply(prepared: PreparedEdit[]): Promise<void> {
     const workspaceEdit = new vscode.WorkspaceEdit();
+    let hasChanges = false;
     for (const edit of prepared) {
       const current = await this.read(edit.absolutePath);
-      if (hash(current) !== edit.currentHash || (edit.originalHash && edit.originalHash !== hash(current))) throw new Error(`File changed since preview: ${edit.path}`);
+      if (decidePreparedApply(current, edit.content, hash(current), edit.currentHash, edit.originalHash, edit.path) === 'already-applied') continue;
       const uri = vscode.Uri.file(edit.absolutePath);
+      hasChanges = true;
       if (current === undefined) {
         workspaceEdit.createFile(uri, { ignoreIfExists: false });
         workspaceEdit.insert(uri, new vscode.Position(0, 0), edit.content);
@@ -35,6 +37,7 @@ export class WorkspaceAdapter {
         workspaceEdit.replace(uri, new vscode.Range(0, 0, end.line, end.character), edit.content);
       }
     }
+    if (!hasChanges) return;
     if (!await vscode.workspace.applyEdit(workspaceEdit)) throw new Error('VS Code could not apply the approved change');
   }
   private async read(file: string): Promise<string | undefined> {

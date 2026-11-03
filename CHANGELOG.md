@@ -2,6 +2,27 @@
 
 All notable changes to Pair Flow are documented here.
 
+## 0.4.0 — 2026-11-03
+
+### Added
+
+- Workspace-local session persistence with automatic recovery after VS Code restarts.
+- A collapsible conversation timeline and compact recent-session summaries.
+- Paused sessions with Resume and Cancel actions.
+- Configurable provider timeout through `pairFlow.requestTimeoutSeconds`.
+- An in-panel revision composer at each chunk decision boundary.
+
+### Fixed
+
+- Retry now reruns the failed plan, chunk, or apply operation instead of only changing UI state.
+- Provider timeouts preserve work as a resumable paused session.
+- Duplicate approval clicks no longer create duplicate timeline events.
+
+### Changed
+
+- Increased base text, metadata, input, and control sizes for readability and accessibility.
+- Stop now pauses and saves the current session instead of resetting it.
+
 ## 0.3.2 — 2026-11-02
 
 ### Added

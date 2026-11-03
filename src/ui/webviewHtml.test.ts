@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { renderBody, renderWebviewHtml } from './webviewHtml';
+import type { HistoryEntry, SessionSummary } from '../session/types';
 
 describe('webview', () => {
   it('uses a nonce CSP and escapes session content', () => {
@@ -35,6 +36,31 @@ describe('webview', () => {
   });
   it('colors story progress from the actual number of completed chapters', () => {
     const html = renderBody({ phase: 'requestingChunk', goal: 'Build auth', currentStep: 1, plan: { summary: 'S', steps: ['A', 'B', 'C'] } } as never);
-    expect(html).toContain('--story-progress:50%');
+    expect(html).toContain('story-step done');
+    expect(html).toContain('Now: preparing chapter 2');
+    expect(html).not.toContain('style="');
+  });
+
+  it('renders escaped conversation history and compact session summaries', () => {
+    const history: HistoryEntry[] = [{ id: '1', timestamp: '2026-11-03T17:00:00.000Z', role: 'user', type: 'goal', title: 'Goal', body: '<img src=x onerror=alert(1)>' }];
+    const sessions: SessionSummary[] = [{ id: '1', title: 'Build history', status: 'done', updatedAt: '2026-11-03T17:00:00.000Z' }];
+    const html = renderBody({ phase: 'awaitingPlanApproval', currentStep: 0, plan: { summary: 'S', steps: ['A'] } } as never, 0, history, sessions);
+    expect(html).toContain('conversation-timeline');
+    expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;');
+    expect(html).not.toContain('<img src=x');
+    expect(html).toContain('Build history');
+    expect(html).toContain('Done');
+  });
+
+  it('renders resume and cancel controls for paused work', () => {
+    const html = renderBody({ phase: 'paused', goal: 'Build auth', currentStep: 0, resumePhase: 'planning' } as never);
+    expect(html).toContain('data-command="resume"');
+    expect(html).toContain('data-command="cancelSession"');
+  });
+
+  it('renders an in-panel revision composer at the chunk decision boundary', () => {
+    const html = renderBody({ phase: 'awaitingChunkApproval', currentStep: 0, plan: { summary: 'S', steps: ['A'] }, chunk: { stepIndex: 0, title: 'A', explanation: 'E', edits: [] } } as never);
+    expect(html).toContain('data-action="message"');
+    expect(html).toContain('name="message"');
   });
 });

@@ -13,3 +13,9 @@ export function validateEdits(root: string, edits: ProposedEdit[]): ValidatedEdi
     return { ...edit, absolutePath };
   });
 }
+
+export function decidePreparedApply(currentContent: string | undefined, proposedContent: string, actualHash: string, previewHash: string, originalHash?: string, path = 'file'): 'apply' | 'already-applied' {
+  if (currentContent === proposedContent) return 'already-applied';
+  if (actualHash !== previewHash || (originalHash && originalHash !== actualHash)) throw new Error(`File changed since preview: ${path}`);
+  return 'apply';
+}

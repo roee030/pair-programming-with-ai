@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import path from 'node:path';
-import { validateEdits } from './editValidation';
+import { decidePreparedApply, validateEdits } from './editValidation';
 
 describe('edit validation', () => {
   const root = path.resolve('workspace');
@@ -12,5 +12,11 @@ describe('edit validation', () => {
   });
   it('rejects null bytes', () => {
     expect(() => validateEdits(root, [{ path: 'a.txt', content: 'a\0b' }])).toThrow(/binary/i);
+  });
+  it('treats content already written before a restart as safely applied', () => {
+    expect(decidePreparedApply('new', 'new', 'new-hash', 'old-hash', 'old-hash')).toBe('already-applied');
+  });
+  it('still rejects a changed file whose content is not the approved proposal', () => {
+    expect(() => decidePreparedApply('someone else changed it', 'new', 'changed-hash', 'old-hash', 'old-hash')).toThrow(/changed since preview/i);
   });
 });

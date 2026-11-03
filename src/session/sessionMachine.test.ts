@@ -24,6 +24,22 @@ describe('session machine', () => {
     expect(failed.resumePhase).toBe('requestingChunk');
     expect(transition(failed, { type: 'RETRY' }).phase).toBe('requestingChunk');
   });
+
+  it('pauses active work and resumes the exact prior phase', () => {
+    const planning = transition(initialState(), { type: 'SUBMIT_GOAL', goal: 'Add login' });
+    const paused = transition(planning, { type: 'PAUSE' });
+    expect(paused.phase).toBe('paused');
+    expect(paused.resumePhase).toBe('planning');
+    expect(transition(paused, { type: 'RESUME' }).phase).toBe('planning');
+  });
+
+  it('can cancel paused work without erasing its state', () => {
+    const planning = transition(initialState(), { type: 'SUBMIT_GOAL', goal: 'Add login' });
+    const paused = transition(planning, { type: 'PAUSE' });
+    const canceled = transition(paused, { type: 'CANCEL' });
+    expect(canceled.phase).toBe('canceled');
+    expect(canceled.goal).toBe('Add login');
+  });
 });
 
 function approvedPlanState() {

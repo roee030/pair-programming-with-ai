@@ -10,7 +10,8 @@ export async function setApiKey(secrets: vscode.SecretStorage): Promise<void> {
 export async function getConfiguration(secrets: vscode.SecretStorage) {
   const config = vscode.workspace.getConfiguration('pairFlow');
   const provider = getProvider();
-  return { provider, apiKey: await secrets.get(secretKey(provider)) ?? '', baseUrl: config.get<string>('baseUrl', ''), model: config.get<string>('model', '') };
+  const requestTimeoutSeconds = Math.max(30, Math.min(600, config.get<number>('requestTimeoutSeconds', 120)));
+  return { provider, apiKey: await secrets.get(secretKey(provider)) ?? '', baseUrl: config.get<string>('baseUrl', ''), model: config.get<string>('model', ''), requestTimeoutSeconds, timeoutMs: requestTimeoutSeconds * 1000 };
 }
 function getProvider(): Provider { return vscode.workspace.getConfiguration('pairFlow').get<Provider>('provider', 'openai'); }
 function secretKey(provider: Provider): string { return `pairFlow.apiKey.${provider}`; }

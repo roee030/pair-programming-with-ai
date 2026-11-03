@@ -4,6 +4,9 @@ export function initialState(): SessionState { return { phase: 'idle', currentSt
 
 export function transition(state: SessionState, event: SessionEvent): SessionState {
   if (event.type === 'RESET') return initialState();
+  if (event.type === 'PAUSE' && isPausable(state.phase)) return { ...state, phase: 'paused', resumePhase: state.phase };
+  if (event.type === 'CANCEL' && state.phase !== 'completed') return { ...state, phase: 'canceled', error: undefined, resumePhase: undefined };
+  if (event.type === 'RESUME' && state.phase === 'paused' && state.resumePhase) return { ...state, phase: state.resumePhase, error: undefined };
   if (event.type === 'FAIL' && state.phase !== 'error') return { ...state, phase: 'error', error: event.message, resumePhase: state.phase };
   if (event.type === 'RETRY' && state.phase === 'error' && state.resumePhase) return { ...state, phase: state.resumePhase, error: undefined, resumePhase: undefined };
   switch (state.phase) {
@@ -32,4 +35,8 @@ export function transition(state: SessionState, event: SessionEvent): SessionSta
       break;
   }
   throw new Error(`Event ${event.type} is not allowed while ${state.phase}`);
+}
+
+function isPausable(phase: SessionState['phase']): phase is 'planning' | 'requestingChunk' | 'applying' {
+  return phase === 'planning' || phase === 'requestingChunk' || phase === 'applying';
 }

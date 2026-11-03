@@ -57,7 +57,7 @@ Download the latest VSIX from [GitHub Releases](https://github.com/roee030/pair-
 Or install from the command line:
 
 ```powershell
-code --install-extension .\pair-flow-0.3.2.vsix
+code --install-extension .\pair-flow-0.4.0.vsix
 ```
 
 ## A good first prompt
@@ -79,7 +79,7 @@ npm run typecheck
 npm run package
 ```
 
-The packaged extension is written to `pair-flow-0.3.2.vsix`. Press `F5` in VS Code to run the extension in an Extension Development Host while developing.
+The packaged extension is written to `pair-flow-0.4.0.vsix`. Press `F5` in VS Code to run the extension in an Extension Development Host while developing.
 
 ## AI providers
 
@@ -118,7 +118,7 @@ Pair Flow has no hosted service. To create plans and chunks, selected text files
 
 ## Status
 
-This is an early public preview. Pair Flow now lives in a persistent Activity Bar side panel: the goal is the story entry point, plan steps are connected chapters, and every proposed file opens as a native VS Code diff with previous/next navigation. The current release supports one workspace root and whole-file text proposals. The next milestones are VS Code Extension Host integration tests, selective context controls, and Marketplace publishing.
+This is an early public preview. Pair Flow now lives in a persistent Activity Bar side panel with larger, accessible typography, a conversation timeline, resumable workspace-local sessions, and safe pause/resume controls. Every proposed file opens as a native VS Code diff with previous/next navigation. The current release supports one workspace root and whole-file text proposals. The next milestones are VS Code Extension Host integration tests, selective context controls, checkpoints, and Marketplace publishing.
 
 Found a rough edge? [Open an issue](https://github.com/roee030/pair-programming-with-ai/issues/new) with the smallest reproduction you can share.
 
