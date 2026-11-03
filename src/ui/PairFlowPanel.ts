@@ -33,7 +33,6 @@ export class PairFlowPanel implements vscode.WebviewViewProvider {
     void this.ensureRestored();
   }
   bind(orchestrator: PairOrchestrator): void { this.orchestrator = orchestrator; this.render(orchestrator.current); }
-  refresh(): void { this.draw(); }
   async ensureSession(): Promise<PairOrchestrator | undefined> {
     await this.ensureRestored();
     if (this.orchestrator) return this.orchestrator;

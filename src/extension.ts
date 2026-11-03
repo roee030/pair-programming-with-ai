@@ -24,7 +24,7 @@ export function activate(context: vscode.ExtensionContext): void {
     }
     const orchestrator = new PairOrchestrator(createProviderClient(settings), new WorkspaceAdapter(root), state => panel.render(state), {
       initial,
-      persist: async session => { await repository?.save(session); panel.refresh(); }
+      persist: async session => { await repository?.save(session); }
     });
     await orchestrator.restorePrepared();
     return orchestrator;

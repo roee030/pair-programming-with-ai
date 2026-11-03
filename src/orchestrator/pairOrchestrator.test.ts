@@ -26,6 +26,73 @@ describe('pair orchestrator', () => {
     expect(writes).toBe(0);
   });
 
+  it('accepts one chapter, applies it once, and advances to the next review', async () => {
+    let chunkIndex = 0;
+    const applied: unknown[][] = [];
+    const model = {
+      requestPlan: async () => ({ summary: 'S', steps: ['A', 'B'] }),
+      requestChunk: async () => ({ stepIndex: chunkIndex, title: `Chapter ${++chunkIndex}`, explanation: 'E', edits: [{ path: `chapter-${chunkIndex}.ts`, content: 'x' }] })
+    };
+    const workspace = { context: async () => '', prepare: async (edits: unknown[]) => edits, apply: async (edits: unknown[]) => { applied.push(edits); } };
+    const orchestrator = new PairOrchestrator(model as never, workspace as never, () => {});
+    await orchestrator.submitGoal('goal'); await orchestrator.approvePlan();
+
+    await orchestrator.approveChunk();
+
+    expect(applied).toHaveLength(1);
+    expect(applied[0]).toEqual([{ path: 'chapter-1.ts', content: 'x' }]);
+    expect(orchestrator.current.phase).toBe('awaitingChunkApproval');
+    expect(orchestrator.current.currentStep).toBe(1);
+    expect(orchestrator.current.chunk?.title).toBe('Chapter 2');
+    expect(orchestrator.snapshot.history.filter(entry => entry.type === 'approval')).toHaveLength(2);
+    expect(orchestrator.snapshot.history.filter(entry => entry.type === 'applied')).toHaveLength(1);
+  });
+
+  it('rejects without applying or advancing and requests a replacement for the same chapter', async () => {
+    const requests: Array<{ stepIndex: number; feedback?: string }> = [];
+    let writes = 0;
+    const model = {
+      requestPlan: async () => ({ summary: 'S', steps: ['A'] }),
+      requestChunk: async (_goal: string, _plan: unknown, stepIndex: number, _context: string, feedback?: string) => {
+        requests.push({ stepIndex, feedback });
+        return { stepIndex, title: feedback ? 'Replacement' : 'Original', explanation: 'E', edits: [] };
+      }
+    };
+    const workspace = { context: async () => '', prepare: async () => [], apply: async () => { writes++; } };
+    const orchestrator = new PairOrchestrator(model as never, workspace as never, () => {});
+    await orchestrator.submitGoal('goal'); await orchestrator.approvePlan();
+
+    await orchestrator.rejectChunk('Use a smaller change');
+
+    expect(writes).toBe(0);
+    expect(orchestrator.current.currentStep).toBe(0);
+    expect(orchestrator.current.phase).toBe('awaitingChunkApproval');
+    expect(orchestrator.current.chunk?.title).toBe('Replacement');
+    expect(requests).toEqual([{ stepIndex: 0, feedback: undefined }, { stepIndex: 0, feedback: 'Use a smaller change' }]);
+    expect(orchestrator.snapshot.history.filter(entry => entry.type === 'revision')).toHaveLength(1);
+    expect(orchestrator.snapshot.history.some(entry => entry.type === 'applied')).toBe(false);
+  });
+
+  it('ignores a duplicate accept while the chapter apply is still running', async () => {
+    let writes = 0;
+    let release!: () => void;
+    const gate = new Promise<void>(resolve => { release = resolve; });
+    const model = { requestPlan: async () => ({ summary: 'S', steps: ['A'] }), requestChunk: async () => ({ stepIndex: 0, title: 'A', explanation: 'E', edits: [] }) };
+    const workspace = { context: async () => '', prepare: async () => [], apply: async () => { writes++; await gate; } };
+    const orchestrator = new PairOrchestrator(model as never, workspace as never, () => {});
+    await orchestrator.submitGoal('goal'); await orchestrator.approvePlan();
+
+    const first = orchestrator.approveChunk();
+    const duplicate = orchestrator.approveChunk();
+    await Promise.resolve();
+    expect(writes).toBe(1);
+    release(); await Promise.all([first, duplicate]);
+
+    expect(orchestrator.current.phase).toBe('completed');
+    expect(orchestrator.snapshot.history.filter(entry => entry.title === 'Chunk approved')).toHaveLength(1);
+    expect(orchestrator.snapshot.history.filter(entry => entry.type === 'applied')).toHaveLength(1);
+  });
+
   it('ignores duplicate approvals while the next chunk is loading', async () => {
     let chunkRequests = 0;
     let release!: () => void;
