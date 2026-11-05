@@ -51,6 +51,18 @@ describe('SessionRepository', () => {
     expect(repository.list()[0].status).toBe('paused');
   });
 
+  it('restores a saved failure as paused so a stale error is not shown again after restart', async () => {
+    const state = new MemoryState();
+    const files = new MemoryFiles();
+    const repository = new SessionRepository(state, files);
+    await repository.save(session({ state: { phase: 'error', currentStep: 0, goal: 'Retry me', error: 'Unexpected token \'<\', "<!DOCTYPE"... is not valid JSON', resumePhase: 'planning' } }));
+
+    const restored = await repository.loadActive();
+
+    expect(restored?.status).toBe('paused');
+    expect(restored?.state).toEqual({ phase: 'paused', currentStep: 0, goal: 'Retry me', resumePhase: 'planning' });
+  });
+
   it('rejects malformed and unsupported session files safely', async () => {
     const state = new MemoryState();
     const files = new MemoryFiles();

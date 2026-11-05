@@ -2,6 +2,12 @@
 
 All notable changes to Pair Flow are documented here.
 
+## Unreleased
+
+### Fixed
+
+- A failed action saved before a restart or upgrade (such as the old `Unexpected token '<'` error from 0.4.0) no longer comes back as the same error card. The session reopens as paused, and Resume sends a fresh request with the current version.
+
 ## 0.4.1 — 2026-11-05
 
 ### Added

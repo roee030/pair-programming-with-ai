@@ -35,6 +35,14 @@ export class SessionRepository {
         await this.save(restored);
         return restored;
       }
+      if (session.status === 'active' && session.state.phase === 'error' && session.state.resumePhase) {
+        // A failure saved by an earlier run (or an older version of the extension) is stale after a restart.
+        // Restore it as paused so the user resumes with a fresh request instead of seeing the old error again.
+        const { error: _staleError, ...state } = session.state;
+        const restored: PersistedSession = { ...session, status: 'paused', state: { ...state, phase: 'paused', resumePhase: session.state.resumePhase } };
+        await this.save(restored);
+        return restored;
+      }
       return session;
     } catch { return undefined; }
   }
