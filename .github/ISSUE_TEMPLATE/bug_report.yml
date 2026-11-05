@@ -1,0 +1,41 @@
+name: Bug report
+description: Report reproducible Pair Flow behavior
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Never paste API keys, private source code, or provider transcripts.
+  - type: input
+    id: versions
+    attributes:
+      label: Pair Flow and VS Code versions
+      placeholder: Pair Flow 0.4.0; VS Code 1.xx.x
+    validations:
+      required: true
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Provider
+      options: [OpenAI, Anthropic, Gemini, OpenRouter, Ollama, Other]
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Minimal reproduction
+      description: Use a disposable project and remove sensitive content.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and sanitized logs
+    validations:
+      required: true

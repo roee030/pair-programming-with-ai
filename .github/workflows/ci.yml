@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -12,6 +12,7 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,3 +23,9 @@ jobs:
       - run: npm test
       - run: npm run typecheck
       - run: npm run build
+      - run: npm run package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pair-flow-vsix
+          path: pair-flow-*.vsix
+          if-no-files-found: error

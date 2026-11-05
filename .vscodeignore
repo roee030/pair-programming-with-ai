@@ -5,10 +5,14 @@
 .superpowers/**
 src/**
 docs/**
-CHANGELOG.md
 node_modules/**
 *.test.*
 tsconfig.json
 esbuild.mjs
 package-lock.incomplete.json
 node_modules.incomplete/**
+.playwright-mcp/**
+.codex-pr80-*
+marketing/**
+docs/superpowers/**
+**/*.map

@@ -15,6 +15,8 @@
 
 ---
 
+![Pair Flow reviewing one chapter inside VS Code](https://raw.githubusercontent.com/roee030/pair-programming-with-ai/main/docs/images/pair-flow-review.png)
+
 AI coding agents are fast. Sometimes too fast: they generate hundreds of lines, touch several files, and leave the developer reviewing code they never really owned.
 
 Pair Flow changes the unit of collaboration. It pauses before the plan and before every code change, so you stay inside the reasoning loop instead of cleaning up afterward.
@@ -45,7 +47,7 @@ Apply / Ask or revise / Reject
 
 ## Try it
 
-Download the latest VSIX from [GitHub Releases](https://github.com/roee030/pair-programming-with-ai/releases), then:
+Install **Pair Flow** from the VS Code Marketplace when the Preview listing is available, or download the latest VSIX from [GitHub Releases](https://github.com/roee030/pair-programming-with-ai/releases), then:
 
 1. Open VS Code → Extensions → `…` → **Install from VSIX**.
 2. Open a disposable project folder for your first test.
@@ -65,6 +67,8 @@ code --install-extension .\pair-flow-0.4.0.vsix
 > Add input validation to the signup handler. Explain the approach first, then keep every proposed change small enough for me to understand without scrolling.
 
 Pair Flow returns an ordered plan. After plan approval it prepares only the first chunk, explains why it exists, and opens the current and proposed code side by side.
+
+![A paused Pair Flow session ready to resume](https://raw.githubusercontent.com/roee030/pair-programming-with-ai/main/docs/images/pair-flow-resume.png)
 
 ## Build from source
 
@@ -114,7 +118,25 @@ npm run package
 
 ## Privacy
 
-Pair Flow has no hosted service. To create plans and chunks, selected text files from the open workspace are sent directly to the model endpoint you configure. Do not use a provider that is not approved for your codebase. Shell commands are never executed automatically in this release.
+Pair Flow has no hosted service and no product analytics. Session history is stored locally per workspace. To create plans and chunks, selected text files from the open workspace are sent directly to the model endpoint you configure. API keys use VS Code SecretStorage and are never written to session JSON. Do not use a provider that is not approved for your codebase. Shell commands are never executed automatically in this release.
+
+## Settings
+
+| Setting | Default | Purpose |
+| --- | --- | --- |
+| `pairFlow.provider` | `openai` | OpenAI, Anthropic, Gemini, OpenRouter, or Ollama |
+| `pairFlow.model` | provider default | Optional model override |
+| `pairFlow.baseUrl` | provider default | Proxy, gateway, or self-hosted endpoint |
+| `pairFlow.requestTimeoutSeconds` | `120` | Pause long requests after 30–600 seconds |
+| `pairFlow.maxContextFiles` | `12` | Maximum candidate workspace files |
+
+## Troubleshooting
+
+- **No workspace:** open a folder before starting Pair Flow.
+- **Authentication error:** run **Pair Flow: Set API Key** again and confirm the selected provider.
+- **Ollama connection error:** start Ollama locally and verify the configured model exists.
+- **A request takes too long:** use **Stop and keep session**, then Resume or change the timeout setting.
+- **A proposed file changed after preview:** Pair Flow intentionally refuses the stale apply; request a fresh chapter.
 
 ## Status
 
@@ -124,7 +146,7 @@ Found a rough edge? [Open an issue](https://github.com/roee030/pair-programming-
 
 ## Contributing
 
-Small, reviewable pull requests fit the project philosophy best. Start with an issue, keep behavior changes covered by tests, and run `npm run package` before opening a PR.
+Small, reviewable pull requests fit the project philosophy best. Read [CONTRIBUTING.md](CONTRIBUTING.md), start with an issue, keep behavior changes covered by tests, and run `npm run package` before opening a PR. Security issues should follow [SECURITY.md](SECURITY.md), not a public issue.
 
 ## License
 

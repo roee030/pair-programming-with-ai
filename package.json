@@ -5,16 +5,23 @@
   "version": "0.4.0",
   "license": "MIT",
   "publisher": "pair-flow",
+  "preview": true,
+  "pricing": "Free",
+  "icon": "media/pair-flow.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/roee030/pair-programming-with-ai.git"
   },
   "homepage": "https://github.com/roee030/pair-programming-with-ai#readme",
   "bugs": { "url": "https://github.com/roee030/pair-programming-with-ai/issues" },
-  "keywords": ["ai", "pair-programming", "code-review", "human-in-the-loop", "developer-tools"],
-  "galleryBanner": { "color": "#1f2933", "theme": "dark" },
+  "keywords": ["ai", "coding-agent", "pair-programming", "code-review", "human-in-the-loop", "approval", "developer-tools", "ollama", "openai", "anthropic", "gemini"],
+  "galleryBanner": { "color": "#0b0d14", "theme": "dark" },
   "engines": { "vscode": "^1.95.0" },
-  "categories": ["Other", "Machine Learning"],
+  "categories": ["AI", "Other"],
+  "capabilities": {
+    "untrustedWorkspaces": { "supported": false, "description": "Pair Flow reads workspace context and applies explicitly approved edits." },
+    "virtualWorkspaces": { "supported": false }
+  },
   "activationEvents": ["onCommand:pairFlow.start", "onCommand:pairFlow.setApiKey", "onView:pairFlow.view"],
   "main": "./dist/extension.js",
   "contributes": {
