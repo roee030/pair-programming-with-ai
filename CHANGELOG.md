@@ -2,7 +2,7 @@
 
 All notable changes to Pair Flow are documented here.
 
-## Unreleased
+## 0.4.3 — 2026-11-05
 
 ### Fixed
 
