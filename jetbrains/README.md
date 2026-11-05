@@ -39,18 +39,11 @@ builds and tests only the core module.
 
 ## Publishing to JetBrains Marketplace
 
-1. Create a vendor account at <https://plugins.jetbrains.com> and upload the first zip by hand
-   (the first upload is reviewed by JetBrains, usually within two working days).
-2. Create a signing certificate (see "Plugin Signing" in the IntelliJ Platform docs) and a Marketplace token.
-3. Later versions can be published from the command line:
-
-```bash
-export CERTIFICATE_CHAIN=... PRIVATE_KEY=... PRIVATE_KEY_PASSWORD=... PUBLISH_TOKEN=...
-./gradlew :plugin:publishPlugin
-```
+See [docs/jetbrains-marketplace-publishing.md](../docs/jetbrains-marketplace-publishing.md). Releases after
+the first one go out from the **JetBrains release** workflow when you push a `jetbrains-v<version>` tag.
 
 ## Known gaps compared with VS Code
 
 - The panel colours are read from the IDE theme when the tool window opens; switching theme needs a reopen.
 - Each "open file" click opens a new diff tab instead of replacing the previous preview.
-- `./gradlew :plugin:verifyPlugin` (the JetBrains compatibility checker) is not run in CI yet because it downloads several IDEs.
+- The JetBrains compatibility checker (`verifyPlugin`) runs only in the release workflow, because it downloads several IDEs.

@@ -31,10 +31,20 @@ dependencies {
     }
 }
 
+// "What's new" on Marketplace: the bullets of the newest section in jetbrains/CHANGELOG.md.
+val releaseNotes = providers.fileContents(rootProject.layout.projectDirectory.file("CHANGELOG.md")).asText.map { text ->
+    val section = text.substringAfter("\n## ", "").substringAfter("\n").substringBefore("\n## ")
+    val items = section.lines().map { it.trim() }.filter { it.startsWith("- ") }.joinToString("") { line ->
+        "<li>" + line.removePrefix("- ").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") + "</li>"
+    }
+    if (items.isEmpty()) "" else "<ul>$items</ul>"
+}
+
 intellijPlatform {
     projectName = "pair-flow-jetbrains"
     pluginConfiguration {
         version = providers.gradleProperty("version")
+        changeNotes = releaseNotes
         ideaVersion {
             sinceBuild = providers.gradleProperty("pluginSinceBuild")
             untilBuild = provider { null }
