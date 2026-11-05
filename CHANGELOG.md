@@ -2,6 +2,12 @@
 
 All notable changes to Pair Flow are documented here.
 
+## Unreleased
+
+### Added
+
+- **Pair Flow: Set API Key** now asks for an optional base URL after the key. Press Enter on the empty box to use the provider's default API address. The choice is saved in every scope where `pairFlow.baseUrl` is set, so a stale workspace value can't override it.
+
 ## 0.4.3 — 2026-11-05
 
 ### Fixed
