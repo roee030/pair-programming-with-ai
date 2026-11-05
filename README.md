@@ -15,7 +15,7 @@
 
 ---
 
-![Pair Flow reviewing one chapter inside VS Code](https://raw.githubusercontent.com/roee030/pair-programming-with-ai/main/docs/images/pair-flow-review.png)
+![Pair Flow demo: plan a change, approve the route, review each chunk in a native diff](https://raw.githubusercontent.com/roee030/pair-programming-with-ai/main/docs/images/pair-flow-demo.gif)
 
 AI coding agents are fast. Sometimes too fast: they generate hundreds of lines, touch several files, and leave the developer reviewing code they never really owned.
 
@@ -35,6 +35,8 @@ Apply / Ask or revise / Reject
    │
    └──────── repeat, one understood change at a time
 ```
+
+![Pair Flow reviewing one chapter inside VS Code](https://raw.githubusercontent.com/roee030/pair-programming-with-ai/main/docs/images/pair-flow-review.png)
 
 ## The contract
 
