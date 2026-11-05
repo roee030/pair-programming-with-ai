@@ -53,8 +53,8 @@ Install **Pair Flow** from the VS Code Marketplace when the Preview listing is a
 
 1. Open VS Code → Extensions → `…` → **Install from VSIX**.
 2. Open a disposable project folder for your first test.
-3. Run **Pair Flow: Set API Key** from the Command Palette.
-4. Optionally set `pairFlow.baseUrl` and `pairFlow.model` in Settings.
+3. Run **Pair Flow: Set API Key** from the Command Palette. After the key, it asks for an optional base URL: press Enter on the empty box to use the provider's default address.
+4. Optionally set `pairFlow.model` in Settings.
 5. Run **Pair Flow: Start Session**.
 6. Ask for one real change and inspect every decision boundary.
 
