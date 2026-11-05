@@ -2,6 +2,13 @@
 
 All notable changes to Pair Flow are documented here.
 
+## Unreleased
+
+### Fixed
+
+- A provider that answers with an HTML page (wrong base URL, proxy, captive portal) no longer pauses the flow with a raw `Unexpected token '<'` JSON error. Pair Flow now reports the status code, content type, URL, and a hint to check `pairFlow.baseUrl`.
+- A base URL set to just the provider host (for example `https://openrouter.ai`) now gets the correct API path added automatically.
+
 ## 0.4.0 — 2026-11-03
 
 ### Added

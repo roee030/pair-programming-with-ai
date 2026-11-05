@@ -23,7 +23,7 @@ class ProviderClient implements ModelClient {
   private readonly activeRequests = new Set<AbortController>();
   constructor(private readonly options: ProviderOptions) {
     const fallback = providerDefaults(options.provider);
-    this.baseUrl = (options.baseUrl?.trim() || fallback.baseUrl).replace(/\/$/, '');
+    this.baseUrl = normalizeBaseUrl(options.provider, options.baseUrl?.trim() || fallback.baseUrl);
     this.model = options.model?.trim() || fallback.model;
     this.request = options.fetch ?? fetch;
   }
@@ -69,11 +69,42 @@ class ProviderClient implements ModelClient {
     try {
       const response = await this.request(url, { method: 'POST', headers, body: JSON.stringify(body), signal: controller.signal });
       if (!response.ok) { const detail = await response.text(); throw new Error(`${this.options.provider} request failed (${response.status})${detail ? `: ${detail.slice(0, 240)}` : ''}`); }
-      return response.json();
+      return parseJsonResponse(this.options.provider, url, response);
     } catch (error) {
       if (controller.signal.aborted) throw new Error(timedOut ? `${this.options.provider} request timed out` : 'Task stopped');
       throw error;
     } finally { clearTimeout(timer); this.activeRequests.delete(controller); }
+  }
+}
+
+const apiPaths: Partial<Record<Provider, { host: string; path: string }>> = {
+  openai: { host: 'api.openai.com', path: '/v1' },
+  anthropic: { host: 'api.anthropic.com', path: '/v1' },
+  openrouter: { host: 'openrouter.ai', path: '/api/v1' },
+  gemini: { host: 'generativelanguage.googleapis.com', path: '/v1beta' }
+};
+
+/** Fixes the most common base URL mistake: pasting the bare provider host without its API path. */
+export function normalizeBaseUrl(provider: Provider, baseUrl: string): string {
+  const trimmed = baseUrl.replace(/\/+$/, '');
+  const known = apiPaths[provider];
+  if (!known) return trimmed;
+  try {
+    const url = new URL(trimmed);
+    if (url.hostname === known.host && (url.pathname === '' || url.pathname === '/')) return `${url.origin}${known.path}`;
+  } catch { /* leave invalid URLs for fetch to report */ }
+  return trimmed;
+}
+
+async function parseJsonResponse(provider: Provider, url: string, response: Response): Promise<unknown> {
+  const text = await response.text();
+  try { return JSON.parse(text); } catch {
+    const contentType = response.headers.get('content-type') ?? 'unknown content type';
+    const looksHtml = /^\s*</.test(text);
+    const hint = looksHtml
+      ? ` The server returned an HTML page instead of an API response. Check the "pairFlow.baseUrl" setting (leave it empty to use the ${provider} default), and any proxy or VPN that may intercept the request.`
+      : '';
+    throw new Error(`${provider} returned a non-JSON response (${response.status}, ${contentType}) from ${url}.${hint}`);
   }
 }
 
