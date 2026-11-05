@@ -19,7 +19,7 @@ export function activate(context: vscode.ExtensionContext): void {
     const settings = await getConfiguration(context.secrets);
     if (promptForKey && settings.provider !== 'ollama' && !settings.apiKey) {
       await setApiKey(context.secrets);
-      settings.apiKey = (await getConfiguration(context.secrets)).apiKey;
+      Object.assign(settings, await getConfiguration(context.secrets)); // picks up the key and the base URL chosen in the prompt
       if (!settings.apiKey) return undefined;
     }
     const orchestrator = new PairOrchestrator(createProviderClient(settings), new WorkspaceAdapter(root, settings.maxContextFiles), state => panel.render(state), {
