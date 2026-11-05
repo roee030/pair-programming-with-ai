@@ -2,7 +2,7 @@
   "name": "pair-flow",
   "displayName": "Pair Flow",
   "description": "Build with AI one reviewed code chunk at a time.",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "license": "MIT",
   "publisher": "pair-flow",
   "preview": true,
