@@ -12,7 +12,7 @@ esbuild.mjs
 package-lock.incomplete.json
 node_modules.incomplete/**
 .playwright-mcp/**
-.codex-pr80-*
+.codex-pr80*
 marketing/**
 docs/superpowers/**
 **/*.map
