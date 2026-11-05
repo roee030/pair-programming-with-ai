@@ -17,6 +17,7 @@ document.addEventListener('click', event => {
   if (!button || button.disabled) return;
   const message = { type: button.dataset.command };
   if (button.dataset.index !== undefined) message.index = Number(button.dataset.index);
+  if (button.dataset.sessionId !== undefined) message.id = button.dataset.sessionId;
   vscode.postMessage(message);
   if (['approvePlan', 'approveChunk', 'rejectChunk'].includes(message.type)) lock(button, message.type === 'approvePlan' ? 'Preparing…' : 'Working…');
 });

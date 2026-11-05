@@ -63,4 +63,37 @@ describe('webview', () => {
     expect(html).toContain('data-action="message"');
     expect(html).toContain('name="message"');
   });
+
+  it('offers Resume for sessions the user left, and never for the current one', () => {
+    const sessions: SessionSummary[] = [
+      { id: 'left', title: 'Add login', status: 'active', updatedAt: '2026-11-03T17:00:00.000Z' },
+      { id: 'here', title: 'Current work', status: 'active', updatedAt: '2026-11-03T18:00:00.000Z' },
+      { id: 'old', title: 'Finished', status: 'done', updatedAt: '2026-11-03T16:00:00.000Z' }
+    ];
+    const idle = renderBody({ phase: 'idle', currentStep: 0 } as never, 0, [], sessions, 120, { canResumeSessions: true });
+    expect(idle).toContain('Pick up where you left off');
+    expect(idle).toContain('data-command="openSession" data-session-id="left"');
+    expect(idle).not.toContain('data-session-id="old"');
+    const busy = renderBody({ phase: 'awaitingPlanApproval', currentStep: 0, plan: { summary: 'S', steps: ['A'] } } as never, 0, [], sessions, 120, { canResumeSessions: true, currentSessionId: 'here' });
+    expect(busy).toContain('data-session-id="left"');
+    expect(busy).not.toContain('data-command="openSession" data-session-id="here"');
+    expect(busy).toContain('Current');
+  });
+
+  it('hides Resume and model buttons for hosts that do not handle them yet', () => {
+    const sessions: SessionSummary[] = [{ id: 'left', title: 'Add login', status: 'paused', updatedAt: '2026-11-03T17:00:00.000Z' }];
+    expect(renderBody({ phase: 'idle', currentStep: 0 } as never, 0, [], sessions)).not.toContain('openSession');
+    expect(renderBody({ phase: 'error', currentStep: 0, error: 'x Run "Pair Flow: Choose Model" to pick another model.' } as never)).not.toContain('chooseModel');
+  });
+
+  it('shows provider errors in a wrapping block with a Choose model button for model errors', () => {
+    const error = 'OpenAI request failed (400): invalid model ID: gtp 5 mini\n\nThe model "gtp 5 mini" is not available for OpenAI. Did you mean "gpt-5-mini"? Run "Pair Flow: Choose Model" to pick another model.';
+    const html = renderBody({ phase: 'error', currentStep: 0, error } as never, 0, [], [], 120, { canChooseModel: true });
+    expect(html).toContain('<pre class="error-detail">');
+    expect(html).toContain('<button class="primary" data-command="chooseModel">Choose model</button>');
+    expect(html).toContain('data-command="retry"');
+    const other = renderBody({ phase: 'error', currentStep: 0, error: 'network down' } as never, 0, [], [], 120, { canChooseModel: true });
+    expect(other).toContain('<button class="primary" data-command="retry">');
+    expect(other).toContain('Change model');
+  });
 });

@@ -1,19 +1,21 @@
 import type { Chunk, Plan } from '../session/types';
 import type { ModelClient } from './modelClient';
 import { parseChunkResponse, parsePlanResponse } from './protocol';
+import { defaultModel } from './modelCatalog';
+import { describeProviderError } from './providerErrors';
 
 export type Provider = 'openai' | 'anthropic' | 'gemini' | 'openrouter' | 'ollama';
 export type ProviderOptions = { provider: Provider; apiKey: string; model?: string; baseUrl?: string; fetch?: typeof fetch; timeoutMs?: number };
 
-const defaults: Record<Provider, { baseUrl: string; model: string }> = {
-  openai: { baseUrl: 'https://api.openai.com/v1', model: 'gpt-5-mini' },
-  anthropic: { baseUrl: 'https://api.anthropic.com/v1', model: 'claude-sonnet-4-5' },
-  gemini: { baseUrl: 'https://generativelanguage.googleapis.com/v1beta', model: 'gemini-3.8-flash' },
-  openrouter: { baseUrl: 'https://openrouter.ai/api/v1', model: 'openai/gpt-5-mini' },
-  ollama: { baseUrl: 'http://localhost:11434', model: 'qwen3-coder' }
+const baseUrls: Record<Provider, string> = {
+  openai: 'https://api.openai.com/v1',
+  anthropic: 'https://api.anthropic.com/v1',
+  gemini: 'https://generativelanguage.googleapis.com/v1beta',
+  openrouter: 'https://openrouter.ai/api/v1',
+  ollama: 'http://localhost:11434'
 };
 
-export function providerDefaults(provider: Provider) { return defaults[provider]; }
+export function providerDefaults(provider: Provider) { return { baseUrl: baseUrls[provider], model: defaultModel(provider) }; }
 export function createProviderClient(options: ProviderOptions): ModelClient { return new ProviderClient(options); }
 
 class ProviderClient implements ModelClient {
@@ -68,7 +70,7 @@ class ProviderClient implements ModelClient {
     const timer = setTimeout(() => { timedOut = true; controller.abort(); }, this.options.timeoutMs ?? 120_000);
     try {
       const response = await this.request(url, { method: 'POST', headers, body: JSON.stringify(body), signal: controller.signal });
-      if (!response.ok) { const detail = await response.text(); throw new Error(`${this.options.provider} request failed (${response.status})${detail ? `: ${detail.slice(0, 240)}` : ''}`); }
+      if (!response.ok) throw new Error(describeProviderError(this.options.provider, this.model, response.status, await response.text()));
       return parseJsonResponse(this.options.provider, url, response, Boolean(this.options.baseUrl?.trim()));
     } catch (error) {
       if (controller.signal.aborted) throw new Error(timedOut ? `${this.options.provider} request timed out` : 'Task stopped');
@@ -116,3 +118,42 @@ async function parseJsonResponse(provider: Provider, url: string, response: Resp
 function required(value: string | undefined): string { if (!value) throw new Error('Model returned an empty response'); return value; }
 const PLAN_PROMPT = `You are a careful pair programmer. Return JSON only: {"summary":"what we will do","steps":["small step"]}. Return 3-6 concise chapters. Each chapter is a short action title under 12 words, independently understandable and reviewable. Do not include alternate branches, conditional advice, implementation detail, or code.`;
 const CHUNK_PROMPT = `Return JSON only: {"stepIndex":0,"title":"","explanation":"","edits":[{"path":"relative/path","content":"complete new file content"}],"verification":"optional safe command"}. One coherent change, at most 3 text files. Never use absolute paths.`;
+
+/**
+ * Asks the provider which models this key can use, for the model picker. Returns [] on any failure,
+ * so the picker still works offline or with a gateway that does not expose a model list.
+ */
+export async function fetchModelIds(options: ProviderOptions): Promise<string[]> {
+  const baseUrl = normalizeBaseUrl(options.provider, options.baseUrl?.trim() || providerDefaults(options.provider).baseUrl);
+  const request = options.fetch ?? fetch;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? 8_000);
+  const target: Record<Provider, { url: string; headers: Record<string, string> }> = {
+    openai: { url: `${baseUrl}/models`, headers: { authorization: `Bearer ${options.apiKey}` } },
+    openrouter: { url: `${baseUrl}/models`, headers: { authorization: `Bearer ${options.apiKey}` } },
+    anthropic: { url: `${baseUrl}/models?limit=100`, headers: { 'x-api-key': options.apiKey, 'anthropic-version': '2023-06-01' } },
+    gemini: { url: `${baseUrl}/models?pageSize=200`, headers: { 'x-goog-api-key': options.apiKey } },
+    ollama: { url: `${baseUrl}/api/tags`, headers: {} }
+  };
+  try {
+    if (options.provider !== 'ollama' && !options.apiKey) return [];
+    const { url, headers } = target[options.provider];
+    const response = await request(url, { method: 'GET', headers, signal: controller.signal });
+    if (!response.ok) return [];
+    return modelIdsFrom(options.provider, await response.json());
+  } catch { return []; }
+  finally { clearTimeout(timer); }
+}
+
+export function modelIdsFrom(provider: Provider, data: unknown): string[] {
+  const body = (data ?? {}) as { data?: { id?: unknown }[]; models?: { name?: unknown; supportedGenerationMethods?: unknown }[] };
+  let ids: string[] = [];
+  if (provider === 'ollama') ids = (body.models ?? []).map(model => String(model.name ?? ''));
+  else if (provider === 'gemini') ids = (body.models ?? [])
+    .filter(model => !Array.isArray(model.supportedGenerationMethods) || model.supportedGenerationMethods.includes('generateContent'))
+    .map(model => String(model.name ?? '').replace(/^models\//, ''));
+  else ids = (body.data ?? []).map(model => String(model.id ?? ''));
+  // OpenAI lists embedding, audio and image models too; keep the chat-capable families.
+  if (provider === 'openai') ids = ids.filter(id => /^(gpt-|o\d|chatgpt-)/.test(id) && !/(audio|realtime|transcribe|tts|image|search|embedding)/.test(id));
+  return [...new Set(ids.filter(Boolean))].sort();
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createProviderClient, normalizeBaseUrl, providerDefaults } from './providerClients';
+import { createProviderClient, fetchModelIds, modelIdsFrom, normalizeBaseUrl, providerDefaults } from './providerClients';
 
 function response(body: unknown) { return new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } }); }
 
@@ -87,5 +87,31 @@ describe('base URL normalization', () => {
     const fetch = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>(async () => new Response('<!DOCTYPE html>', { status: 200, headers: { 'content-type': 'text/html' } }));
     const client = createProviderClient({ provider: 'openai', apiKey: 'key', baseUrl: '', fetch });
     await expect(client.requestPlan('goal', 'context')).rejects.toThrow(/default endpoint.*proxy, VPN/);
+  });
+
+  it('shows the provider error message and a model fix instead of raw JSON', async () => {
+    const fetch = vi.fn(async () => new Response('{"error":{"message":"invalid model ID: gtp 5 mini","code":"model_not_found"}}', { status: 400 }));
+    const client = createProviderClient({ provider: 'openai', apiKey: 'key', model: 'gtp 5 mini', baseUrl: '', fetch });
+    const error = await client.requestPlan('goal', 'context').then(() => new Error('expected a failure'), (caught: Error) => caught);
+    expect(error.message).toContain('OpenAI request failed (400): invalid model ID: gtp 5 mini');
+    expect(error.message).toContain('Did you mean "gpt-5-mini"?');
+    expect(error.message).toContain('Pair Flow: Choose Model');
+  });
+
+  it('lists the models a key can use from each provider', async () => {
+    const fetch = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>(async () => response({ data: [{ id: 'gpt-5-mini' }, { id: 'text-embedding-3-small' }, { id: 'gpt-5' }, { id: 'gpt-4o-realtime-preview' }] }));
+    expect(await fetchModelIds({ provider: 'openai', apiKey: 'key', fetch })).toEqual(['gpt-5', 'gpt-5-mini']);
+    expect(fetch.mock.calls[0][0]).toBe('https://api.openai.com/v1/models');
+    expect(modelIdsFrom('anthropic', { data: [{ id: 'claude-sonnet-4-5' }] })).toEqual(['claude-sonnet-4-5']);
+    expect(modelIdsFrom('gemini', { models: [{ name: 'models/gemini-2.5-pro', supportedGenerationMethods: ['generateContent'] }, { name: 'models/embedding-001', supportedGenerationMethods: ['embedContent'] }] })).toEqual(['gemini-2.5-pro']);
+    expect(modelIdsFrom('ollama', { models: [{ name: 'qwen3-coder:latest' }] })).toEqual(['qwen3-coder:latest']);
+  });
+
+  it('falls back to an empty model list when listing fails or no key is set', async () => {
+    const failing = vi.fn(async () => { throw new Error('offline'); });
+    expect(await fetchModelIds({ provider: 'openai', apiKey: 'key', fetch: failing })).toEqual([]);
+    const unused = vi.fn(async () => response({}));
+    expect(await fetchModelIds({ provider: 'anthropic', apiKey: '', fetch: unused })).toEqual([]);
+    expect(unused).not.toHaveBeenCalled();
   });
 });
