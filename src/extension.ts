@@ -22,7 +22,7 @@ export function activate(context: vscode.ExtensionContext): void {
       settings.apiKey = (await getConfiguration(context.secrets)).apiKey;
       if (!settings.apiKey) return undefined;
     }
-    const orchestrator = new PairOrchestrator(createProviderClient(settings), new WorkspaceAdapter(root), state => panel.render(state), {
+    const orchestrator = new PairOrchestrator(createProviderClient(settings), new WorkspaceAdapter(root, settings.maxContextFiles), state => panel.render(state), {
       initial,
       persist: async session => { await repository?.save(session); }
     });

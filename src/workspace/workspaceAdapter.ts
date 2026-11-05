@@ -6,9 +6,9 @@ import { documentEnd } from './textRange';
 
 export type PreparedEdit = ValidatedEdit & { currentHash: string; currentContent: string };
 export class WorkspaceAdapter {
-  constructor(private readonly root: vscode.Uri) {}
-  async context(maxFiles = 12): Promise<string> {
-    const files = await vscode.workspace.findFiles('**/*.{ts,tsx,js,jsx,json,md,py,go,rs,java,cs}', '**/{node_modules,dist,.git}/**', maxFiles);
+  constructor(private readonly root: vscode.Uri, private readonly maxContextFiles = 12) {}
+  async context(): Promise<string> {
+    const files = await vscode.workspace.findFiles('**/*.{ts,tsx,js,jsx,json,md,py,go,rs,java,cs}', '**/{node_modules,dist,.git}/**', this.maxContextFiles);
     const parts: string[] = [];
     for (const file of files) {
       const bytes = await vscode.workspace.fs.readFile(file);

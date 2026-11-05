@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import type { Provider } from '../model/providerClients';
+import { clampMaxContextFiles } from './contextLimits';
 
 export async function setApiKey(secrets: vscode.SecretStorage): Promise<void> {
   const provider = getProvider();
@@ -11,7 +12,8 @@ export async function getConfiguration(secrets: vscode.SecretStorage) {
   const config = vscode.workspace.getConfiguration('pairFlow');
   const provider = getProvider();
   const requestTimeoutSeconds = Math.max(30, Math.min(600, config.get<number>('requestTimeoutSeconds', 120)));
-  return { provider, apiKey: await secrets.get(secretKey(provider)) ?? '', baseUrl: config.get<string>('baseUrl', ''), model: config.get<string>('model', ''), requestTimeoutSeconds, timeoutMs: requestTimeoutSeconds * 1000 };
+  const maxContextFiles = clampMaxContextFiles(config.get<number>('maxContextFiles'));
+  return { provider, apiKey: await secrets.get(secretKey(provider)) ?? '', baseUrl: config.get<string>('baseUrl', ''), model: config.get<string>('model', ''), requestTimeoutSeconds, timeoutMs: requestTimeoutSeconds * 1000, maxContextFiles };
 }
 function getProvider(): Provider { return vscode.workspace.getConfiguration('pairFlow').get<Provider>('provider', 'openai'); }
 function secretKey(provider: Provider): string { return `pairFlow.apiKey.${provider}`; }
