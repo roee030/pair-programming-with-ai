@@ -2,7 +2,7 @@
   "name": "pair-flow",
   "displayName": "Pair Flow",
   "description": "Build with AI one reviewed code chunk at a time.",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "license": "MIT",
   "publisher": "pair-flow",
   "preview": true,
@@ -13,40 +13,122 @@
     "url": "https://github.com/roee030/pair-programming-with-ai.git"
   },
   "homepage": "https://github.com/roee030/pair-programming-with-ai#readme",
-  "bugs": { "url": "https://github.com/roee030/pair-programming-with-ai/issues" },
-  "keywords": ["ai", "coding-agent", "pair-programming", "code-review", "human-in-the-loop", "approval", "developer-tools", "ollama", "openai", "anthropic", "gemini"],
-  "galleryBanner": { "color": "#0b0d14", "theme": "dark" },
-  "engines": { "vscode": "^1.95.0" },
-  "categories": ["AI", "Other"],
-  "capabilities": {
-    "untrustedWorkspaces": { "supported": false, "description": "Pair Flow reads workspace context and applies explicitly approved edits." },
-    "virtualWorkspaces": { "supported": false }
+  "bugs": {
+    "url": "https://github.com/roee030/pair-programming-with-ai/issues"
   },
-  "activationEvents": ["onCommand:pairFlow.start", "onCommand:pairFlow.setApiKey", "onView:pairFlow.view"],
+  "keywords": [
+    "ai",
+    "coding-agent",
+    "pair-programming",
+    "code-review",
+    "human-in-the-loop",
+    "approval",
+    "developer-tools",
+    "ollama",
+    "openai",
+    "anthropic",
+    "gemini"
+  ],
+  "galleryBanner": {
+    "color": "#0b0d14",
+    "theme": "dark"
+  },
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "AI",
+    "Other"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Pair Flow reads workspace context and applies explicitly approved edits."
+    },
+    "virtualWorkspaces": {
+      "supported": false
+    }
+  },
+  "activationEvents": [
+    "onCommand:pairFlow.start",
+    "onCommand:pairFlow.setApiKey",
+    "onView:pairFlow.view"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "viewsContainers": {
       "activitybar": [
-        { "id": "pairFlow", "title": "Pair Flow", "icon": "media/pair-flow.svg" }
+        {
+          "id": "pairFlow",
+          "title": "Pair Flow",
+          "icon": "media/pair-flow.svg"
+        }
       ]
     },
     "views": {
       "pairFlow": [
-        { "type": "webview", "id": "pairFlow.view", "name": "Pair Flow" }
+        {
+          "type": "webview",
+          "id": "pairFlow.view",
+          "name": "Pair Flow"
+        }
       ]
     },
     "commands": [
-      { "command": "pairFlow.start", "title": "Pair Flow: Start Session" },
-      { "command": "pairFlow.setApiKey", "title": "Pair Flow: Set API Key" }
+      {
+        "command": "pairFlow.start",
+        "title": "Pair Flow: Start Session"
+      },
+      {
+        "command": "pairFlow.setApiKey",
+        "title": "Pair Flow: Set API Key"
+      }
     ],
     "configuration": {
       "title": "Pair Flow",
       "properties": {
-        "pairFlow.provider": { "type": "string", "enum": ["openai", "anthropic", "gemini", "openrouter", "ollama"], "enumDescriptions": ["OpenAI API", "Anthropic Messages API", "Google Gemini API", "OpenRouter", "Local Ollama server"], "default": "openai", "description": "AI provider used for plans and code chunks." },
-        "pairFlow.baseUrl": { "type": "string", "default": "", "description": "Optional custom provider base URL. Leave empty to use the provider default." },
-        "pairFlow.model": { "type": "string", "default": "", "description": "Optional model identifier. Leave empty to use the provider default." },
-        "pairFlow.requestTimeoutSeconds": { "type": "number", "default": 120, "minimum": 30, "maximum": 600, "description": "Seconds before an active provider request is paused automatically." },
-        "pairFlow.maxContextFiles": { "type": "number", "default": 12, "minimum": 1, "maximum": 30 }
+        "pairFlow.provider": {
+          "type": "string",
+          "enum": [
+            "openai",
+            "anthropic",
+            "gemini",
+            "openrouter",
+            "ollama"
+          ],
+          "enumDescriptions": [
+            "OpenAI API",
+            "Anthropic Messages API",
+            "Google Gemini API",
+            "OpenRouter",
+            "Local Ollama server"
+          ],
+          "default": "openai",
+          "description": "AI provider used for plans and code chunks."
+        },
+        "pairFlow.baseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Optional custom provider base URL. Leave empty to use the provider default."
+        },
+        "pairFlow.model": {
+          "type": "string",
+          "default": "",
+          "description": "Optional model identifier. Leave empty to use the provider default."
+        },
+        "pairFlow.requestTimeoutSeconds": {
+          "type": "number",
+          "default": 120,
+          "minimum": 30,
+          "maximum": 600,
+          "description": "Seconds before an active provider request is paused automatically."
+        },
+        "pairFlow.maxContextFiles": {
+          "type": "number",
+          "default": 12,
+          "minimum": 1,
+          "maximum": 30
+        }
       }
     }
   },
