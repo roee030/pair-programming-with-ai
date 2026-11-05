@@ -3,9 +3,9 @@ name: JetBrains plugin
 on:
   push:
     branches: [main]
-    paths: ['jetbrains/**', 'src/ui/**', 'media/**', 'scripts/build-jetbrains-ui.mjs', '.github/workflows/jetbrains.yml']
+    paths: ['jetbrains/**', 'src/ui/**', 'media/**', 'scripts/build-jetbrains-ui.mjs', '.github/workflows/jetbrains*.yml']
   pull_request:
-    paths: ['jetbrains/**', 'src/ui/**', 'media/**', 'scripts/build-jetbrains-ui.mjs', '.github/workflows/jetbrains.yml']
+    paths: ['jetbrains/**', 'src/ui/**', 'media/**', 'scripts/build-jetbrains-ui.mjs', '.github/workflows/jetbrains*.yml']
   workflow_dispatch:
 
 permissions:
