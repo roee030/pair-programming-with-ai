@@ -2,7 +2,13 @@
 
 All notable changes to Pair Flow are documented here.
 
-## Unreleased
+## 0.4.1 — 2026-11-05
+
+### Added
+
+- README demo GIF on the Marketplace page.
+- A JetBrains version of Pair Flow now lives in `jetbrains/` (released separately on JetBrains Marketplace).
+- Kotlin, Kotlin script and Java files get their own icons in the file list.
 
 ### Fixed
 
