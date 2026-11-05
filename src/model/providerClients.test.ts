@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createProviderClient, providerDefaults } from './providerClients';
+import { createProviderClient, normalizeBaseUrl, providerDefaults } from './providerClients';
 
 function response(body: unknown) { return new Response(JSON.stringify(body), { status: 200, headers: { 'content-type': 'application/json' } }); }
 
@@ -57,7 +57,7 @@ describe('provider response handling', () => {
   it('explains an HTML page returned with status 200 instead of a raw JSON parse error', async () => {
     const fetch = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>(async () => new Response('<!DOCTYPE html><html></html>', { status: 200, headers: { 'content-type': 'text/html' } }));
     const client = createProviderClient({ provider: 'openai', apiKey: 'key', baseUrl: 'https://example.com/v1', fetch });
-    await expect(client.requestPlan('goal', 'context')).rejects.toThrow(/non-JSON response \(200, text\/html\).*pairFlow\.baseUrl/);
+    await expect(client.requestPlan('goal', 'context')).rejects.toThrow(/non-JSON response \(200, text\/html\) from https:\/\/example\.com\/v1\/chat\/completions.*pairFlow\.baseUrl/);
   });
 
   it('adds the API path when the base URL is only the provider host', async () => {
@@ -65,5 +65,27 @@ describe('provider response handling', () => {
     const client = createProviderClient({ provider: 'openrouter', apiKey: 'key', baseUrl: 'https://openrouter.ai/', fetch });
     await client.requestPlan('goal', 'context');
     expect(fetch.mock.calls[0][0]).toBe('https://openrouter.ai/api/v1/chat/completions');
+  });
+});
+
+describe('base URL normalization', () => {
+  it.each([
+    ['openai', 'https://platform.openai.com/api-keys', 'https://api.openai.com/v1'],
+    ['openai', 'https://chatgpt.com', 'https://api.openai.com/v1'],
+    ['openai', 'https://api.openai.com/v1/chat/completions', 'https://api.openai.com/v1'],
+    ['openai', 'https://api.openai.com', 'https://api.openai.com/v1'],
+    ['anthropic', 'https://console.anthropic.com/settings/keys', 'https://api.anthropic.com/v1'],
+    ['gemini', 'https://aistudio.google.com/apikey', 'https://generativelanguage.googleapis.com/v1beta'],
+    ['openrouter', 'https://openrouter.ai/', 'https://openrouter.ai/api/v1'],
+    ['openai', 'https://my-gateway.example.com/v1/', 'https://my-gateway.example.com/v1'],
+    ['ollama', 'http://localhost:11434/api/chat', 'http://localhost:11434']
+  ] as const)('%s: %s -> %s', (provider, input, expected) => {
+    expect(normalizeBaseUrl(provider, input)).toBe(expected);
+  });
+
+  it('blames the network, not the setting, when the default endpoint returns HTML', async () => {
+    const fetch = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>(async () => new Response('<!DOCTYPE html>', { status: 200, headers: { 'content-type': 'text/html' } }));
+    const client = createProviderClient({ provider: 'openai', apiKey: 'key', baseUrl: '', fetch });
+    await expect(client.requestPlan('goal', 'context')).rejects.toThrow(/default endpoint.*proxy, VPN/);
   });
 });
