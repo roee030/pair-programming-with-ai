@@ -38,7 +38,7 @@ Apply / Ask or revise / Reject
 
 ## The contract
 
-- **No hidden edits.** Model output stays in memory until you approve it.
+- **No hidden workspace edits.** Proposed changes are stored only in workspace-local extension storage for restart recovery, and no source file changes until you approve them.
 - **No giant hand-off.** Each chunk is one coherent change across at most three files.
 - **No escaping the workspace.** Absolute paths and path traversal are rejected.
 - **No stale overwrites.** Source hashes stop a preview from replacing a file that changed afterward.
@@ -118,7 +118,7 @@ npm run package
 
 ## Privacy
 
-Pair Flow has no hosted service and no product analytics. Session history is stored locally per workspace. To create plans and chunks, selected text files from the open workspace are sent directly to the model endpoint you configure. API keys use VS Code SecretStorage and are never written to session JSON. Do not use a provider that is not approved for your codebase. Shell commands are never executed automatically in this release.
+Pair Flow has no hosted service and no product analytics. While a session is active or paused, its transcript, plan, and unapproved proposals are stored in workspace-local extension storage so VS Code can safely resume after a restart. Completed and canceled sessions retain only their lightweight summary. To create plans and chunks, selected text files from the open workspace are sent directly to the model endpoint you configure. API keys use VS Code SecretStorage and are never written to session JSON. Do not use a provider that is not approved for your codebase. Shell commands are never executed automatically in this release.
 
 ## Settings
 

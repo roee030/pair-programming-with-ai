@@ -5,6 +5,7 @@
 .smoke-extensions/**
 .superpowers/**
 src/**
+scripts/**
 docs/**
 node_modules/**
 *.test.*
