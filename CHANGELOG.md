@@ -2,6 +2,17 @@
 
 All notable changes to Pair Flow are documented here.
 
+## Unreleased
+
+### Fixed
+
+- `pairFlow.baseUrl` set to a provider website or dashboard (for example `https://platform.openai.com/api-keys`) or to a full endpoint URL now resolves to the provider API instead of returning an HTML page.
+- The HTML-response error now says whether a custom `pairFlow.baseUrl` or the default endpoint was used, and what to check in each case.
+
+### Docs
+
+- README: where to create an API key for each provider.
+
 ## 0.4.2 — 2026-11-05
 
 ### Fixed

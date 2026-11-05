@@ -69,7 +69,7 @@ class ProviderClient implements ModelClient {
     try {
       const response = await this.request(url, { method: 'POST', headers, body: JSON.stringify(body), signal: controller.signal });
       if (!response.ok) { const detail = await response.text(); throw new Error(`${this.options.provider} request failed (${response.status})${detail ? `: ${detail.slice(0, 240)}` : ''}`); }
-      return parseJsonResponse(this.options.provider, url, response);
+      return parseJsonResponse(this.options.provider, url, response, Boolean(this.options.baseUrl?.trim()));
     } catch (error) {
       if (controller.signal.aborted) throw new Error(timedOut ? `${this.options.provider} request timed out` : 'Task stopped');
       throw error;
@@ -77,33 +77,38 @@ class ProviderClient implements ModelClient {
   }
 }
 
-const apiPaths: Partial<Record<Provider, { host: string; path: string }>> = {
-  openai: { host: 'api.openai.com', path: '/v1' },
-  anthropic: { host: 'api.anthropic.com', path: '/v1' },
-  openrouter: { host: 'openrouter.ai', path: '/api/v1' },
-  gemini: { host: 'generativelanguage.googleapis.com', path: '/v1beta' }
+const apiPaths: Partial<Record<Provider, { host: string; path: string; websites: string[] }>> = {
+  openai: { host: 'api.openai.com', path: '/v1', websites: ['openai.com', 'www.openai.com', 'platform.openai.com', 'chat.openai.com', 'chatgpt.com', 'www.chatgpt.com'] },
+  anthropic: { host: 'api.anthropic.com', path: '/v1', websites: ['anthropic.com', 'www.anthropic.com', 'console.anthropic.com', 'claude.ai', 'www.claude.ai'] },
+  openrouter: { host: 'openrouter.ai', path: '/api/v1', websites: ['www.openrouter.ai'] },
+  gemini: { host: 'generativelanguage.googleapis.com', path: '/v1beta', websites: ['aistudio.google.com', 'ai.google.dev', 'gemini.google.com'] }
 };
+const endpointSuffix = /\/(chat\/completions|messages|api\/chat|models\/[^/]+:generateContent)$/i;
 
-/** Fixes the most common base URL mistake: pasting the bare provider host without its API path. */
+/**
+ * Fixes common base URL mistakes that make a provider answer with an HTML page:
+ * a bare provider host, the provider's website or dashboard instead of its API, or a full endpoint URL.
+ */
 export function normalizeBaseUrl(provider: Provider, baseUrl: string): string {
-  const trimmed = baseUrl.replace(/\/+$/, '');
+  const trimmed = baseUrl.replace(/\/+$/, '').replace(endpointSuffix, '');
   const known = apiPaths[provider];
   if (!known) return trimmed;
   try {
     const url = new URL(trimmed);
+    if (known.websites.includes(url.hostname)) return `https://${known.host}${known.path}`;
     if (url.hostname === known.host && (url.pathname === '' || url.pathname === '/')) return `${url.origin}${known.path}`;
   } catch { /* leave invalid URLs for fetch to report */ }
   return trimmed;
 }
 
-async function parseJsonResponse(provider: Provider, url: string, response: Response): Promise<unknown> {
+async function parseJsonResponse(provider: Provider, url: string, response: Response, customBaseUrl: boolean): Promise<unknown> {
   const text = await response.text();
   try { return JSON.parse(text); } catch {
     const contentType = response.headers.get('content-type') ?? 'unknown content type';
     const looksHtml = /^\s*</.test(text);
-    const hint = looksHtml
-      ? ` The server returned an HTML page instead of an API response. Check the "pairFlow.baseUrl" setting (leave it empty to use the ${provider} default), and any proxy or VPN that may intercept the request.`
-      : '';
+    const hint = !looksHtml ? '' : customBaseUrl
+      ? ' The server returned an HTML page instead of an API response. Your "pairFlow.baseUrl" setting points somewhere that is not the provider API: clear it to use the default endpoint, or set it to your gateway\'s API URL.'
+      : ' The server returned an HTML page instead of an API response, even though Pair Flow used the default endpoint. A proxy, VPN, firewall, or captive portal on this network is probably intercepting the request. Check VS Code\'s "http.proxy" setting and your network.';
     throw new Error(`${provider} returned a non-JSON response (${response.status}, ${contentType}) from ${url}.${hint}`);
   }
 }

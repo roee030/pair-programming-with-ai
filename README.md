@@ -132,9 +132,24 @@ Pair Flow has no hosted service and no product analytics. While a session is act
 | `pairFlow.requestTimeoutSeconds` | `120` | Pause long requests after 30–600 seconds |
 | `pairFlow.maxContextFiles` | `12` | Maximum candidate workspace files |
 
+## Getting an API key
+
+Run **Pair Flow: Set API Key** after choosing `pairFlow.provider`. The key must come from the API console of that provider. A ChatGPT Plus or Claude Pro subscription does not include an API key.
+
+| Provider | Where to create a key |
+| --- | --- |
+| OpenAI | [platform.openai.com/api-keys](https://platform.openai.com/api-keys) |
+| Anthropic | [console.anthropic.com/settings/keys](https://console.anthropic.com/settings/keys) |
+| Google Gemini | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
+| OpenRouter | [openrouter.ai/keys](https://openrouter.ai/keys) |
+| Ollama | No key needed |
+
+Leave `pairFlow.baseUrl` empty unless you use a proxy or gateway. It is the API address, not a website or dashboard link.
+
 ## Troubleshooting
 
 - **No workspace:** open a folder before starting Pair Flow.
+- **"returned a non-JSON response … HTML page":** the error shows the URL Pair Flow called. If you set `pairFlow.baseUrl`, clear it. If it is already empty, a proxy, VPN, or network filter is intercepting the request; check VS Code's `http.proxy` setting.
 - **Authentication error:** run **Pair Flow: Set API Key** again and confirm the selected provider.
 - **Ollama connection error:** start Ollama locally and verify the configured model exists.
 - **A request takes too long:** use **Stop and keep session**, then Resume or change the timeout setting.
