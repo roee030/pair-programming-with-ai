@@ -27,6 +27,7 @@ export class PairOrchestrator {
     this.render(this.state);
   }
 
+  get id(): string { return this.sessionId; }
   get current(): SessionState { return this.state; }
   get snapshot(): PersistedSession {
     const state = this.state.chunk && this.prepared.length === this.state.chunk.edits.length

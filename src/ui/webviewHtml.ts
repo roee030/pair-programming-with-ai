@@ -1,4 +1,8 @@
 import type { HistoryEntry, SessionState, SessionSummary } from '../session/types';
+import { suggestsModelChange } from '../model/providerErrors';
+
+/** Host features. The JetBrains port renders the same body and turns these on only once it handles the messages. */
+export type RenderOptions = { currentSessionId?: string; canResumeSessions?: boolean; canChooseModel?: boolean };
 
 const escape = (value: unknown) => String(value ?? '').replace(/[&<>"]/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[char]!);
 const icon = (name: 'spark' | 'goal' | 'check' | 'file' | 'arrow' | 'warning') => {
@@ -11,11 +15,11 @@ const icon = (name: 'spark' | 'goal' | 'check' | 'file' | 'arrow' | 'warning') =
   return `<svg class="icon icon-${name}" viewBox="0 0 24 24" aria-hidden="true">${paths[name]}</svg>`;
 };
 
-export function renderBody(state: SessionState, selectedFile = 0, history: readonly HistoryEntry[] = [], sessions: readonly SessionSummary[] = [], timeoutSeconds = 120): string {
+export function renderBody(state: SessionState, selectedFile = 0, history: readonly HistoryEntry[] = [], sessions: readonly SessionSummary[] = [], timeoutSeconds = 120, options: RenderOptions = {}): string {
   const shellStart = `<main><div class="toolbar"><span class="mode-pill"><i></i>Approval mode</span><button class="icon-button" data-command="reset" title="New code story">＋</button></div>`;
   const shellEnd = `</main>`;
-  const extras = `${renderSessionList(sessions)}${renderTimeline(history)}`;
-  if (state.phase === 'idle') return `<main class="idle-shell"><div class="toolbar"><span class="mode-pill"><i></i>Approval mode</span><button class="icon-button" data-command="reset" title="New code story">＋</button></div>${renderSessionList(sessions)}<section class="empty-stage"><div class="empty-logo"><span></span><span></span><span></span></div><h1>Start a code story</h1><p>Describe the outcome. Pair Flow will find the entry point, map the connected steps, and pause at every chunk.</p></section><section class="composer-wrap"><form class="composer" data-action="goal"><textarea name="goal" rows="3" autofocus placeholder="Ask Pair Flow to build or change something…"></textarea><div class="composer-bar"><div class="composer-hints"><span>⌁ Plan first</span><span>◇ Review each chunk</span></div><button class="send" aria-label="Build the story" title="Build the story">${icon('arrow')}</button></div></form><p class="privacy-line"><span>◆</span> No file changes without approval</p></section></main>`;
+  const extras = `${renderSessionList(sessions, options)}${renderTimeline(history)}`;
+  if (state.phase === 'idle') return `<main class="idle-shell"><div class="toolbar"><span class="mode-pill"><i></i>Approval mode</span><button class="icon-button" data-command="reset" title="New code story">＋</button></div>${renderResumeCard(sessions, options)}${renderSessionList(sessions, options)}<section class="empty-stage"><div class="empty-logo"><span></span><span></span><span></span></div><h1>Start a code story</h1><p>Describe the outcome. Pair Flow will find the entry point, map the connected steps, and pause at every chunk.</p></section><section class="composer-wrap"><form class="composer" data-action="goal"><textarea name="goal" rows="3" autofocus placeholder="Ask Pair Flow to build or change something…"></textarea><div class="composer-bar"><div class="composer-hints"><span>⌁ Plan first</span><span>◇ Review each chunk</span></div><button class="send" aria-label="Build the story" title="Build the story">${icon('arrow')}</button></div></form><p class="privacy-line"><span>◆</span> No file changes without approval</p></section></main>`;
 
   const story = renderStory(state);
   if (state.phase === 'planning' || state.phase === 'requestingChunk' || state.phase === 'applying') {
@@ -36,11 +40,11 @@ export function renderBody(state: SessionState, selectedFile = 0, history: reado
     return `${shellStart}${extras}${story}<section class="chapter-card"><div class="chapter-number">Chapter ${state.currentStep + 1}</div><h2>${escape(state.chunk.title)}</h2><p>${escape(state.chunk.explanation)}</p><div class="connection"><span></span><p><strong>Why this comes next</strong><br>${escape(state.plan?.steps[state.currentStep] ?? state.chunk.title)}</p></div></section><section class="working-set"><div class="section-heading"><div><p class="kicker">Review in editor</p><h3>${files.length} proposed ${files.length === 1 ? 'file' : 'files'}</h3></div><code data-file-position>${files.length ? safeIndex + 1 : 0} / ${files.length}</code></div><div class="file-list">${fileRows || '<p class="empty">This chapter contains no file changes.</p>'}</div><div class="file-nav"><button data-command="previousFile" ${safeIndex <= 0 ? 'disabled' : ''}>← Previous</button><button data-command="nextFile" ${safeIndex >= files.length - 1 ? 'disabled' : ''}>Next file →</button></div></section><footer class="action-dock"><form class="message-composer" data-action="message"><textarea name="message" rows="2" placeholder="Ask a question or request a smaller revision…"></textarea><button class="secondary" aria-label="Send revision">Send</button></form><button class="primary wide" data-command="approveChunk">${icon('check')}<span>Apply approved chunk</span></button><button class="danger wide" data-command="rejectChunk">Reject chunk</button><p class="dock-note">Approves this chapter only. The next one will wait for you too.</p></footer>${shellEnd}`;
   }
 
-  if (state.phase === 'paused') return `${shellStart}${extras}${story}<section class="paused-card" aria-live="polite"><p class="kicker">Session paused</p><h2>Your work is saved.</h2><p>Resume the last action when you are ready, or cancel this session.</p><button class="primary wide" data-command="resume">Resume</button><button class="secondary wide" data-command="cancelSession">Cancel session</button></section>${shellEnd}`;
+  if (state.phase === 'paused') return `${shellStart}${extras}${story}<section class="paused-card" aria-live="polite"><p class="kicker">Session paused</p><h2>Your work is saved.</h2><p>Resume the last action when you are ready. You can also leave and come back later: the session stays under Recent sessions.</p><button class="primary wide" data-command="resume">Resume</button><button class="secondary wide" data-command="cancelSession">Cancel session</button></section>${shellEnd}`;
 
   if (state.phase === 'completed' || state.phase === 'canceled') return `${shellStart}${extras}${story}<section class="complete"><div class="complete-mark">${icon('check')}</div><p class="kicker success">${state.phase === 'completed' ? 'Story complete' : 'Session canceled'}</p><h1>${state.phase === 'completed' ? 'You stayed in control of every change.' : 'Your history is still available.'}</h1><p>${state.phase === 'completed' ? 'The route is finished and every chunk was explicitly approved.' : 'Start a new story whenever you are ready.'}</p><button class="primary" data-command="reset">Start a new story</button></section>${shellEnd}`;
 
-  return `${shellStart}${extras}${story}<section class="error-card">${icon('warning')}<p class="kicker error">Flow paused</p><h2>The current action did not finish.</h2><p>${escape(state.error)}</p><button class="primary" data-command="retry">Try again</button><button class="secondary" data-command="reset">Start over</button></section>${shellEnd}`;
+  return `${shellStart}${extras}${story}<section class="error-card" role="alert">${icon('warning')}<p class="kicker error">Flow paused</p><h2>The current action did not finish.</h2><pre class="error-detail">${escape(state.error)}</pre>${options.canChooseModel && suggestsModelChange(state.error) ? `<button class="primary" data-command="chooseModel">Choose model</button><button class="secondary" data-command="retry">Try again</button>` : `<button class="primary" data-command="retry">Try again</button>${options.canChooseModel ? '<button class="secondary" data-command="chooseModel">Change model</button>' : ''}`}<button class="secondary" data-command="reset">Start over</button><p class="dock-note">Your session is saved. Try again after fixing the setting.</p></section>${shellEnd}`;
 }
 
 function renderTimeline(history: readonly HistoryEntry[]): string {
@@ -49,10 +53,35 @@ function renderTimeline(history: readonly HistoryEntry[]): string {
   return `<details class="conversation-timeline" open><summary>Conversation <span>${history.length}</span></summary><ol>${items}</ol></details>`;
 }
 
-function renderSessionList(sessions: readonly SessionSummary[]): string {
+function renderSessionList(sessions: readonly SessionSummary[], options: RenderOptions = {}): string {
   if (!sessions.length) return '';
-  const labels: Record<SessionSummary['status'], string> = { active: 'Active', paused: 'Paused', done: 'Done', canceled: 'Canceled' };
-  return `<details class="session-history"><summary>Recent sessions <span>${sessions.length}</span></summary><ul>${sessions.map(session => `<li><span>${escape(session.title)}</span><small class="status-${session.status}">${labels[session.status]}</small></li>`).join('')}</ul></details>`;
+  const labels: Record<SessionSummary['status'], string> = { active: 'Open', paused: 'Paused', done: 'Done', canceled: 'Canceled' };
+  const rows = sessions.map(session => {
+    const current = session.id === options.currentSessionId;
+    const action = current ? '<small class="current-tag">Current</small>' : options.canResumeSessions && isOpen(session) ? resumeButton(session) : '';
+    return `<li><span title="${escape(session.title)}">${escape(session.title)}</span><small class="status-${session.status}">${labels[session.status]}</small>${action}</li>`;
+  }).join('');
+  return `<details class="session-history"><summary>Recent sessions <span>${sessions.length}</span></summary><ul>${rows}</ul></details>`;
+}
+
+/** On the start screen: sessions the user left open, each with a Resume button. */
+function renderResumeCard(sessions: readonly SessionSummary[], options: RenderOptions): string {
+  if (!options.canResumeSessions) return '';
+  const open = sessions.filter(session => isOpen(session) && session.id !== options.currentSessionId).slice(0, 3);
+  if (!open.length) return '';
+  const rows = open.map(session => `<li><div><strong title="${escape(session.title)}">${escape(session.title)}</strong><small>${session.status === 'paused' ? 'Paused' : 'Waiting for you'} · ${escape(relativeTime(session.updatedAt))}</small></div>${resumeButton(session)}<button class="link-button" data-command="discardSession" data-session-id="${escape(session.id)}" title="Discard this session">Discard</button></li>`).join('');
+  return `<section class="resume-card"><p class="kicker">Pick up where you left off</p><ul>${rows}</ul></section>`;
+}
+
+function resumeButton(session: SessionSummary): string { return `<button class="resume-button" data-command="openSession" data-session-id="${escape(session.id)}">Resume</button>`; }
+function isOpen(session: SessionSummary): boolean { return session.status === 'active' || session.status === 'paused'; }
+function relativeTime(iso: string): string {
+  const minutes = Math.round((Date.now() - new Date(iso).getTime()) / 60_000);
+  if (!Number.isFinite(minutes)) return '';
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes} min ago`;
+  if (minutes < 60 * 24) return `${Math.round(minutes / 60)} h ago`;
+  return new Date(iso).toLocaleDateString();
 }
 
 function renderStory(state: SessionState): string {

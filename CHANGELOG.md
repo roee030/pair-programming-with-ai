@@ -2,6 +2,18 @@
 
 All notable changes to Pair Flow are documented here.
 
+## Unreleased
+
+### Added
+
+- **Pair Flow: Choose Model** picks the provider (OpenAI, Anthropic, Gemini, OpenRouter, Ollama) and then a model: suggested models with the default marked, the models your key can use, or **Other model…** for any id. Set API Key now ends with the same model step.
+- Sessions are no longer canceled when you start a new story or switch away. Each one stays saved, and the start screen lists open sessions under **Pick up where you left off** with **Resume** and **Discard**. **Recent sessions** has a Resume button too.
+
+### Fixed
+
+- Provider errors show the provider's own message instead of raw JSON. A wrong model id (for example `gtp 5 mini`) suggests the closest valid one and shows a **Choose model** button; **Try again** then uses the new model in the same session.
+- Long error text and long ids wrap inside the panel instead of overflowing it.
+
 ## 0.4.4 — 2026-11-05
 
 ### Added

@@ -86,16 +86,43 @@ describe('SessionRepository', () => {
     expect(repository.list().at(-1)?.id).toBe('session-2');
   });
 
-  it('keeps only one resumable session and removes completed transcript bodies', async () => {
+  it('keeps earlier open sessions saved when a new one starts, so the user can come back to them', async () => {
     const state = new MemoryState();
     const files = new MemoryFiles();
     const repository = new SessionRepository(state, files);
-    await repository.save(session({ id: 'first' }));
-    await repository.save(session({ id: 'second', updatedAt: '2026-11-03T18:00:00.000Z' }));
+    await repository.save(session({ id: 'first', title: 'First story' }));
+    await repository.save(session({ id: 'second', title: 'Second story', updatedAt: '2026-11-03T18:00:00.000Z' }));
 
-    expect(repository.list().find(item => item.id === 'first')?.status).toBe('canceled');
-    expect(files.data.has('session-first.json')).toBe(false);
+    expect(repository.list().map(item => [item.id, item.status])).toEqual([['second', 'active'], ['first', 'active']]);
+    expect(files.data.has('session-first.json')).toBe(true);
+    expect((await repository.load('first'))?.title).toBe('First story');
+    expect((await repository.loadActive())?.id).toBe('second');
+  });
 
+  it('survives a restart: a new repository on the same storage resumes the saved session', async () => {
+    const state = new MemoryState();
+    const files = new MemoryFiles();
+    await new SessionRepository(state, files).save(session({ id: 'left', state: { phase: 'awaitingChunkApproval', currentStep: 2, goal: 'Come back later' } }));
+
+    const reopened = new SessionRepository(state, files);
+
+    expect(reopened.list()[0]).toMatchObject({ id: 'left', status: 'active' });
+    expect((await reopened.load('left'))?.state).toMatchObject({ phase: 'awaitingChunkApproval', currentStep: 2 });
+  });
+
+  it('removes session bodies that fall out of the twenty newest', async () => {
+    const files = new MemoryFiles();
+    const repository = new SessionRepository(new MemoryState(), files);
+    for (let index = 0; index < 21; index++) await repository.save(session({ id: `s${index}`, updatedAt: new Date(index * 1000).toISOString() }));
+
+    expect(files.data.has('session-s0.json')).toBe(false);
+    expect(files.data.has('session-s1.json')).toBe(true);
+  });
+
+  it('removes completed transcript bodies', async () => {
+    const files = new MemoryFiles();
+    const repository = new SessionRepository(new MemoryState(), files);
+    await repository.save(session({ id: 'second' }));
     await repository.save(session({ id: 'second', status: 'done', state: { phase: 'completed', currentStep: 1 } }));
     expect(repository.list().find(item => item.id === 'second')?.status).toBe('done');
     expect(files.data.has('session-second.json')).toBe(false);

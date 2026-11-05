@@ -22,11 +22,16 @@ export class SessionRepository {
 
   list(): readonly SessionSummary[] { return this.summaries; }
 
+  /** The most recently updated session that is still open (active or paused). */
   async loadActive(): Promise<PersistedSession | undefined> {
-    const summary = this.summaries.find(item => item.status === 'active' || item.status === 'paused');
-    if (!summary) return undefined;
+    const summary = this.summaries.find(item => isOpen(item.status));
+    return summary ? this.load(summary.id) : undefined;
+  }
+
+  /** Loads one saved session. A request that was running when the window closed comes back paused, ready to resume. */
+  async load(id: string): Promise<PersistedSession | undefined> {
     try {
-      const raw = await this.files.read(fileName(summary.id));
+      const raw = await this.files.read(fileName(id));
       if (!raw) return undefined;
       const session = parseSession(JSON.parse(raw));
       if (!session) return undefined;
@@ -48,24 +53,22 @@ export class SessionRepository {
   }
 
   async save(session: PersistedSession): Promise<void> {
-    if (session.status === 'active' || session.status === 'paused') {
-      const superseded = this.summaries.filter(item => item.id !== session.id && (item.status === 'active' || item.status === 'paused'));
-      await Promise.all(superseded.map(item => this.files.delete(fileName(item.id))));
-      this.summaries = this.summaries.map(item => superseded.some(old => old.id === item.id) ? { ...item, status: 'canceled' as const } : item);
-      await this.files.write(fileName(session.id), JSON.stringify(session));
-    } else {
-      await this.files.delete(fileName(session.id));
-    }
+    // Several sessions can stay open at once: starting a new story never cancels the one you left.
+    if (isOpen(session.status)) await this.files.write(fileName(session.id), JSON.stringify(session));
+    else await this.files.delete(fileName(session.id));
     const summary = toSummary(session);
-    this.summaries = [summary, ...this.summaries.filter(item => item.id !== session.id)]
-      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0, LIMIT);
+    const sorted = [summary, ...this.summaries.filter(item => item.id !== session.id)]
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    this.summaries = sorted.slice(0, LIMIT);
+    await Promise.all(sorted.slice(LIMIT).map(item => this.files.delete(fileName(item.id))));
     await this.index.update(INDEX_KEY, this.summaries);
   }
 
   async markStatus(id: string, status: SessionStatus): Promise<void> {
-    const raw = await this.files.read(fileName(id));
-    if (raw) {
-      const session = parseSession(JSON.parse(raw));
+    if (!isOpen(status)) await this.files.delete(fileName(id));
+    else {
+      const raw = await this.files.read(fileName(id));
+      const session = raw ? parseSession(JSON.parse(raw)) : undefined;
       if (session) await this.files.write(fileName(id), JSON.stringify({ ...session, status }));
     }
     this.summaries = this.summaries.map(item => item.id === id ? { ...item, status } : item);
@@ -78,6 +81,8 @@ export class SessionRepository {
     await this.index.update(INDEX_KEY, this.summaries);
   }
 }
+
+function isOpen(status: SessionStatus): boolean { return status === 'active' || status === 'paused'; }
 
 function isRunningPhase(phase: PersistedSession['state']['phase']): phase is 'planning' | 'requestingChunk' | 'applying' {
   return phase === 'planning' || phase === 'requestingChunk' || phase === 'applying';

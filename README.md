@@ -53,8 +53,8 @@ Install **Pair Flow** from the VS Code Marketplace when the Preview listing is a
 
 1. Open VS Code → Extensions → `…` → **Install from VSIX**.
 2. Open a disposable project folder for your first test.
-3. Run **Pair Flow: Set API Key** from the Command Palette. After the key, it asks for an optional base URL: press Enter on the empty box to use the provider's default address.
-4. Optionally set `pairFlow.model` in Settings.
+3. Run **Pair Flow: Set API Key** from the Command Palette. After the key, it asks for an optional base URL (press Enter on the empty box to use the provider's default address) and then lets you pick a model.
+4. To switch provider or model later, run **Pair Flow: Choose Model**. It lists suggested models, the models your key can use, and an **Other model…** option for any model id.
 5. Run **Pair Flow: Start Session**.
 6. Ask for one real change and inspect every decision boundary.
 
@@ -150,6 +150,8 @@ Leave `pairFlow.baseUrl` empty unless you use a proxy or gateway. It is the API 
 
 - **No workspace:** open a folder before starting Pair Flow.
 - **"returned a non-JSON response … HTML page":** the error shows the URL Pair Flow called. If you set `pairFlow.baseUrl`, clear it. If it is already empty, a proxy, VPN, or network filter is intercepting the request; check VS Code's `http.proxy` setting.
+- **"model … is not recognized" / "does not exist":** the model id is wrong for that provider (for example `gtp 5 mini` instead of `gpt-5-mini`). Click **Choose model** on the error card, or run **Pair Flow: Choose Model**, then **Try again**. The session is kept.
+- **Coming back later:** leaving a session, starting a new story, or closing VS Code keeps the session saved. Open the Pair Flow panel and click **Resume** under *Pick up where you left off* or *Recent sessions*.
 - **Authentication error:** run **Pair Flow: Set API Key** again and confirm the selected provider.
 - **Ollama connection error:** start Ollama locally and verify the configured model exists.
 - **A request takes too long:** use **Stop and keep session**, then Resume or change the timeout setting.

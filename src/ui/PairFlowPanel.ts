@@ -9,6 +9,9 @@ import { PairDiffProvider } from './PairDiffProvider';
 import { parsePanelMessage } from './panelMessages';
 import { renderBody, renderWebviewHtml } from './webviewHtml';
 
+/** Host actions the panel can trigger outside one session. */
+export type SessionActions = { chooseModel?: () => Promise<boolean>; discard?: (id: string) => Promise<void> };
+
 export class PairFlowPanel implements vscode.WebviewViewProvider {
   private view?: vscode.WebviewView;
   private orchestrator?: PairOrchestrator;
@@ -20,9 +23,10 @@ export class PairFlowPanel implements vscode.WebviewViewProvider {
     private readonly extensionUri: vscode.Uri,
     private readonly diffs: PairDiffProvider,
     private readonly createSession: () => Promise<PairOrchestrator | undefined>,
-    private readonly restoreSession: () => Promise<PairOrchestrator | undefined> = async () => undefined,
+    private readonly restoreSession: (id?: string) => Promise<PairOrchestrator | undefined> = async () => undefined,
     private readonly listSessions: () => readonly SessionSummary[] = () => [],
-    private readonly timeoutSeconds = 120
+    private readonly timeoutSeconds = 120,
+    private readonly sessionActions: SessionActions = {}
   ) {}
 
   resolveWebviewView(view: vscode.WebviewView): void {
@@ -56,7 +60,7 @@ export class PairFlowPanel implements vscode.WebviewViewProvider {
     if (!this.view) return;
     const webview = this.view.webview;
     const nonce = randomBytes(16).toString('base64');
-    webview.html = renderWebviewHtml(nonce, webview.cspSource, webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'main.css')).toString(), webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'main.js')).toString(), renderBody(this.state, this.selectedFile, this.orchestrator?.getHistory() ?? [], this.listSessions(), this.timeoutSeconds));
+    webview.html = renderWebviewHtml(nonce, webview.cspSource, webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'main.css')).toString(), webview.asWebviewUri(vscode.Uri.joinPath(this.extensionUri, 'media', 'main.js')).toString(), renderBody(this.state, this.selectedFile, this.orchestrator?.getHistory() ?? [], this.listSessions(), this.timeoutSeconds, { currentSessionId: this.orchestrator?.id, canResumeSessions: true, canChooseModel: !!this.sessionActions.chooseModel }));
   }
   private async handle(value: unknown): Promise<void> {
     const message = parsePanelMessage(value);
@@ -69,6 +73,15 @@ export class PairFlowPanel implements vscode.WebviewViewProvider {
     if (message.type === 'previousFile' || message.type === 'nextFile') {
       this.selectedFile = moveFileSelection(this.selectedFile, message.type === 'nextFile' ? 1 : -1, flow?.getPrepared().length ?? 0);
       await this.syncFileSelection(); await this.openSelected(); return;
+    }
+    if (message.type === 'openSession') { await this.openSession(message.id); return; }
+    if (message.type === 'discardSession') { await this.discardSession(message.id); return; }
+    if (message.type === 'chooseModel') {
+      if (await this.sessionActions.chooseModel?.()) {
+        // Retry right away with the new model when the session stopped on an error.
+        if (flow?.current.phase === 'error') await flow.retry();
+      }
+      return;
     }
     if (message.type === 'submitGoal' && !flow) flow = await this.ensureSession();
     if (!flow) return;
@@ -84,19 +97,42 @@ export class PairFlowPanel implements vscode.WebviewViewProvider {
     else if (message.type === 'reset') await this.startNewStory(flow);
   }
 
+  /** "New story" and "Start over" keep the current session saved so the developer can come back to it. */
   private async startNewStory(flow: PairOrchestrator): Promise<void> {
-    const active = !['idle', 'completed', 'canceled'].includes(flow.current.phase);
-    if (active) {
-      const choice = await vscode.window.showWarningMessage('Cancel the current Pair Flow session and start a new story?', { modal: true }, 'Cancel session');
-      if (choice !== 'Cancel session') return;
-      flow.cancel();
-    }
+    this.park(flow);
+    await flow.whenPersisted();
     this.orchestrator = undefined;
     this.state = initialState();
     this.selectedFile = 0;
     this.lastChunk = undefined;
     this.draw();
   }
+
+  /** Switches the panel to a saved session. The session being left is paused and saved, never canceled. */
+  async openSession(id: string): Promise<void> {
+    const leaving = this.orchestrator;
+    if (leaving?.id === id) return;
+    if (leaving) { this.park(leaving); await leaving.whenPersisted(); }
+    const next = await this.restoreSession(id);
+    if (!next) { void vscode.window.showWarningMessage('That Pair Flow session could not be loaded. It may have been removed.'); this.draw(); return; }
+    this.orchestrator = undefined;
+    this.selectedFile = 0;
+    this.lastChunk = undefined;
+    this.bind(next);
+  }
+
+  private async discardSession(id: string): Promise<void> {
+    const choice = await vscode.window.showWarningMessage('Discard this saved Pair Flow session? It cannot be resumed afterwards.', { modal: true }, 'Discard');
+    if (choice !== 'Discard') return;
+    await this.sessionActions.discard?.(id);
+    this.draw();
+  }
+
+  /** Stops an in-flight request so the session is saved as paused, ready to resume. */
+  private park(flow: PairOrchestrator): void {
+    if (['planning', 'requestingChunk', 'applying'].includes(flow.current.phase)) flow.stop();
+  }
+
   private async openSelected(): Promise<void> {
     const prepared = this.orchestrator?.getPrepared() ?? [];
     const edit = prepared[this.selectedFile];
