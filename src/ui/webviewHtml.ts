@@ -80,8 +80,8 @@ function storyStatus(state: SessionState): string {
 
 function fileName(path: string): string { return path.split(/[\\/]/).pop() ?? path; }
 function extension(path: string): string { return fileName(path).split('.').pop()?.toLowerCase() ?? ''; }
-function fileGlyph(path: string): string { return ({ ts: 'TS', tsx: 'TS', js: 'JS', jsx: 'JS', css: '#', json: '{}', md: 'M↓', py: 'PY', cs: 'C#', go: 'GO', rs: 'RS' } as Record<string, string>)[extension(path)] ?? '·/'; }
-function fileColor(path: string): string { return `kind-${({ ts: 'blue', tsx: 'blue', js: 'yellow', jsx: 'yellow', css: 'violet', json: 'amber', md: 'cyan', py: 'green', cs: 'violet', go: 'cyan', rs: 'orange' } as Record<string, string>)[extension(path)] ?? 'neutral'}`; }
+function fileGlyph(path: string): string { return ({ ts: 'TS', tsx: 'TS', js: 'JS', jsx: 'JS', css: '#', json: '{}', md: 'M↓', py: 'PY', cs: 'C#', go: 'GO', rs: 'RS', kt: 'KT', kts: 'KT', java: 'JV' } as Record<string, string>)[extension(path)] ?? '·/'; }
+function fileColor(path: string): string { return `kind-${({ ts: 'blue', tsx: 'blue', js: 'yellow', jsx: 'yellow', css: 'violet', json: 'amber', md: 'cyan', py: 'green', cs: 'violet', go: 'cyan', rs: 'orange', kt: 'violet', kts: 'violet', java: 'orange' } as Record<string, string>)[extension(path)] ?? 'neutral'}`; }
 
 export function renderWebviewHtml(nonce: string, cspSource: string, styleUri: string, scriptUri: string, body: string): string {
   return `<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource}; script-src 'nonce-${nonce}'"><link rel="stylesheet" href="${styleUri}"></head><body>${body}<script nonce="${nonce}" src="${scriptUri}"></script></body></html>`;

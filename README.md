@@ -140,6 +140,11 @@ Pair Flow has no hosted service and no product analytics. While a session is act
 - **A request takes too long:** use **Stop and keep session**, then Resume or change the timeout setting.
 - **A proposed file changed after preview:** Pair Flow intentionally refuses the stale apply; request a fresh chapter.
 
+## JetBrains IDEs
+
+A JetBrains version (IntelliJ IDEA, WebStorm, PyCharm and the rest, 2025.1+) lives in [`jetbrains/`](jetbrains/README.md).
+It reuses the same panel UI and ports the core logic to Kotlin.
+
 ## Status
 
 This is an early public preview. Pair Flow now lives in a persistent Activity Bar side panel with larger, accessible typography, a conversation timeline, resumable workspace-local sessions, and safe pause/resume controls. Every proposed file opens as a native VS Code diff with previous/next navigation. The current release supports one workspace root and whole-file text proposals. The next milestones are VS Code Extension Host integration tests, selective context controls, checkpoints, and Marketplace publishing.

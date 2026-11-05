@@ -1,0 +1,34 @@
+<idea-plugin>
+    <id>dev.pairflow.jetbrains</id>
+    <name>Pair Flow</name>
+    <vendor url="https://github.com/roee030/pair-programming-with-ai">Pair Flow</vendor>
+
+    <description><![CDATA[
+    <p>Build with AI one reviewed code chunk at a time.</p>
+    <p>Describe a goal, approve the plan, then review every proposed change in the IDE diff viewer
+    before it touches your files. Nothing is written without your explicit approval.</p>
+    <ul>
+      <li>Plan first: the AI maps the work into short chapters you approve up front.</li>
+      <li>Review each chunk: at most three files per chapter, shown as native diffs.</li>
+      <li>Bring your own model: OpenAI, Anthropic, Gemini, OpenRouter or a local Ollama.</li>
+      <li>Sessions are saved, so you can pause, resume or retry at any point.</li>
+    </ul>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <toolWindow id="Pair Flow" anchor="right" icon="/icons/pairFlow.svg"
+                    factoryClass="dev.pairflow.intellij.PairFlowToolWindowFactory"/>
+        <applicationConfigurable parentId="tools" id="dev.pairflow.settings" displayName="Pair Flow"
+                                 instance="dev.pairflow.intellij.PairFlowConfigurable"/>
+        <notificationGroup id="Pair Flow" displayType="BALLOON"/>
+    </extensions>
+
+    <actions>
+        <action id="PairFlow.StartSession" class="dev.pairflow.intellij.StartSessionAction"
+                text="Pair Flow: Start Session" description="Open the Pair Flow panel and start a code story"/>
+        <action id="PairFlow.SetApiKey" class="dev.pairflow.intellij.SetApiKeyAction"
+                text="Pair Flow: Set API Key" description="Store the API key for the selected Pair Flow provider"/>
+    </actions>
+</idea-plugin>
