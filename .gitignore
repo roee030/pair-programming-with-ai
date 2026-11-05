@@ -6,7 +6,7 @@ dist/
 .superpowers/
 .pairflow-preview/
 .smoke-extensions/
-.codex-pr80-*
+.codex-pr80*
 .playwright-mcp/
 marketing/
 .env
