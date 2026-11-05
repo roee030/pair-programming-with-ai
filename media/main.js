@@ -38,16 +38,22 @@ window.addEventListener('message', event => {
   if (next) next.disabled = message.index >= message.count - 1;
 });
 
-const started = Date.now();
-const elapsed = document.querySelector('[data-elapsed]');
-if (elapsed) {
+let elapsedTimer;
+function startElapsedTimer() {
+  clearInterval(elapsedTimer);
+  const started = Date.now();
+  const elapsed = document.querySelector('[data-elapsed]');
+  if (!elapsed) return;
   const timeout = Number(document.querySelector('[data-timeout]')?.dataset.timeout || 120);
   const update = () => {
     const seconds = Math.floor((Date.now() - started) / 1000);
     elapsed.textContent = `${seconds}s elapsed · ${Math.max(0, timeout - seconds)}s remaining`;
   };
-  update(); setInterval(update, 1000);
+  update(); elapsedTimer = setInterval(update, 1000);
 }
+startElapsedTimer();
+// Hosts that re-render the body in place (the JetBrains plugin) call this after each render.
+window.pairFlowAfterRender = startElapsedTimer;
 
 function lock(button, text) {
   if (!button) return;
