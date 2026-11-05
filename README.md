@@ -142,7 +142,7 @@ Pair Flow has no hosted service and no product analytics. While a session is act
 
 ## JetBrains IDEs
 
-A JetBrains version (IntelliJ IDEA, WebStorm, PyCharm and the rest, 2025.1+) lives in [`jetbrains/`](jetbrains/README.md).
+A JetBrains version (IntelliJ IDEA, WebStorm, PyCharm and the rest, 2025.1+) is on [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/35829-pair-flow) (in review) and its source lives in [`jetbrains/`](jetbrains/README.md).
 It reuses the same panel UI and ports the core logic to Kotlin.
 
 ## Status

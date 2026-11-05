@@ -3,6 +3,8 @@
 A port of the Pair Flow VS Code extension to the IntelliJ Platform. One plugin works in IntelliJ IDEA,
 WebStorm, PyCharm, GoLand, Rider and the other JetBrains IDEs, version 2025.1 or newer.
 
+Marketplace page: <https://plugins.jetbrains.com/plugin/35829-pair-flow>
+
 The behaviour matches the VS Code extension: describe a goal, approve the plan, then review each chunk
 (at most three files) in the IDE's diff viewer before anything is written.
 
