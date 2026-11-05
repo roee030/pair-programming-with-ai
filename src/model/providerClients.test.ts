@@ -52,3 +52,18 @@ describe('provider clients', () => {
     await expect(client.requestPlan('goal', 'context')).rejects.toThrow(/timed out/i);
   });
 });
+
+describe('provider response handling', () => {
+  it('explains an HTML page returned with status 200 instead of a raw JSON parse error', async () => {
+    const fetch = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>(async () => new Response('<!DOCTYPE html><html></html>', { status: 200, headers: { 'content-type': 'text/html' } }));
+    const client = createProviderClient({ provider: 'openai', apiKey: 'key', baseUrl: 'https://example.com/v1', fetch });
+    await expect(client.requestPlan('goal', 'context')).rejects.toThrow(/non-JSON response \(200, text\/html\).*pairFlow\.baseUrl/);
+  });
+
+  it('adds the API path when the base URL is only the provider host', async () => {
+    const fetch = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>(async () => new Response(JSON.stringify({ choices: [{ message: { content: '{"summary":"S","steps":["A"]}' } }] }), { status: 200 }));
+    const client = createProviderClient({ provider: 'openrouter', apiKey: 'key', baseUrl: 'https://openrouter.ai/', fetch });
+    await client.requestPlan('goal', 'context');
+    expect(fetch.mock.calls[0][0]).toBe('https://openrouter.ai/api/v1/chat/completions');
+  });
+});
